@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Menu } from "lucide-react"
-import { InvitationPreview } from "@/components/invitation-preview"
+import { InteractiveInvitationPreview } from "@/components/interactive-invitation-preview"
 import { StudioControls } from "@/components/studio-controls"
 import { StudioFooter } from "@/components/studio-footer"
 import { ChooseDesignModal } from "@/components/choose-design-modal"
@@ -112,15 +112,8 @@ export default function InvitationStudioPage() {
 
         {/* Right Panel (preview) */}
         <section className="flex flex-1 flex-col" aria-label="Invitation preview">
-          <div className="flex flex-1 items-center justify-center px-4 py-8 md:py-0">
-            <InvitationPreview
-              language={language}
-              packageType={packageType}
-              openingStyle={openingStyle}
-              animatedEffect={animatedEffect}
-              backgroundMusic={backgroundMusic}
-              guestName={guestName}
-            />
+          <div className="flex flex-1 items-center justify-center px-4 py-6 md:py-0">
+            <InteractiveInvitationPreview />
           </div>
 
           <div className="border-t border-border px-4 py-3 md:px-8 md:py-4">
