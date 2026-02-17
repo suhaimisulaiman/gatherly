@@ -26,6 +26,24 @@ export interface Template {
   tags: string[]
 }
 
+export const EVENT_THEMES: EventTheme[] = [
+  "Wedding",
+  "E-Day",
+  "Birthday",
+  "Open House",
+  "Corporate",
+  "Baby/Aqiqah",
+]
+
+export const STYLE_TAGS: StyleTag[] = [
+  "Minimal",
+  "Floral",
+  "Cute",
+  "Elegant",
+  "Traditional",
+  "Modern",
+]
+
 export const TEMPLATES: Template[] = [
   {
     id: "elegant-rose",
@@ -108,22 +126,4 @@ export const TEMPLATES: Template[] = [
     tier: "premium",
     tags: ["islamic", "geometric", "arabesque", "ornate"],
   },
-]
-
-export const EVENT_THEMES: EventTheme[] = [
-  "Wedding",
-  "E-Day",
-  "Birthday",
-  "Open House",
-  "Corporate",
-  "Baby/Aqiqah",
-]
-
-export const STYLE_TAGS: StyleTag[] = [
-  "Minimal",
-  "Floral",
-  "Cute",
-  "Elegant",
-  "Traditional",
-  "Modern",
 ]

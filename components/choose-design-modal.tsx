@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import Image from "next/image"
 import { Search, Crown, Eye, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
@@ -25,6 +24,9 @@ import {
   type Tier,
 } from "@/lib/templates"
 
+/* ------------------------------------------------------------------ */
+/*  Props                                                              */
+/* ------------------------------------------------------------------ */
 interface ChooseDesignModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -33,7 +35,34 @@ interface ChooseDesignModalProps {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Mini phone preview                                                 */
+/*  Filter chip                                                        */
+/* ------------------------------------------------------------------ */
+function FilterChip({
+  label,
+  active,
+  onClick,
+}: {
+  label: string
+  active: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "inline-flex shrink-0 cursor-pointer items-center rounded-full border px-3 py-1 text-xs font-medium transition-all",
+        active
+          ? "border-foreground bg-foreground text-primary-foreground"
+          : "border-border bg-card text-foreground hover:border-foreground/30"
+      )}
+    >
+      {label}
+    </button>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Mini phone preview overlay                                         */
 /* ------------------------------------------------------------------ */
 function MiniPhonePreview({
   template,
@@ -43,7 +72,7 @@ function MiniPhonePreview({
   onClose: () => void
 }) {
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-foreground/60">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60">
       <div className="relative flex flex-col items-center gap-4">
         <button
           onClick={onClose}
@@ -53,27 +82,22 @@ function MiniPhonePreview({
           <X className="size-4" />
         </button>
 
-        {/* Phone shell */}
-        <div className="w-[240px] rounded-[32px] border-[5px] border-foreground/80 bg-foreground/80 p-0 shadow-2xl">
+        <div className="w-[240px] rounded-[32px] border-[5px] border-neutral-800 bg-neutral-800 p-0 shadow-2xl">
           <div className="relative w-full overflow-hidden rounded-[27px]">
-            {/* Notch */}
-            <div className="absolute top-0 left-1/2 z-10 h-5 w-24 -translate-x-1/2 rounded-b-xl bg-foreground/80" />
+            <div className="absolute top-0 left-1/2 z-10 h-5 w-24 -translate-x-1/2 rounded-b-xl bg-neutral-800" />
             <div className="relative aspect-[9/16] w-full bg-card">
-              <Image
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
                 src={template.thumbnail}
                 alt={template.name}
-                fill
-                className="object-cover"
+                className="h-full w-full object-cover"
               />
             </div>
-            {/* Home bar */}
-            <div className="absolute bottom-1.5 left-1/2 h-1 w-20 -translate-x-1/2 rounded-full bg-muted-foreground/30" />
+            <div className="absolute bottom-1.5 left-1/2 h-1 w-20 -translate-x-1/2 rounded-full bg-white/30" />
           </div>
         </div>
 
-        <p className="text-sm font-medium text-primary-foreground">
-          {template.name}
-        </p>
+        <p className="text-sm font-medium text-white">{template.name}</p>
       </div>
     </div>
   )
@@ -102,17 +126,14 @@ function TemplateCard({
           : "border-border hover:border-foreground/20 hover:shadow-sm"
       )}
     >
-      {/* Thumbnail */}
       <div className="relative aspect-[3/4] w-full overflow-hidden bg-secondary">
-        <Image
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
           src={template.thumbnail}
           alt={template.name}
-          fill
-          className="object-cover transition-transform duration-300 group-hover:scale-105"
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
 
-        {/* Tier badge */}
         {template.tier === "premium" && (
           <div className="absolute top-2 right-2">
             <Badge className="gap-1 border-none bg-foreground/80 px-2 py-0.5 text-[10px] font-medium text-primary-foreground">
@@ -122,7 +143,6 @@ function TemplateCard({
           </div>
         )}
 
-        {/* Selected indicator */}
         {isSelected && (
           <div className="absolute top-2 left-2 flex size-5 items-center justify-center rounded-full bg-foreground">
             <svg
@@ -141,8 +161,7 @@ function TemplateCard({
           </div>
         )}
 
-        {/* Hover overlay */}
-        <div className="absolute inset-0 flex items-center justify-center gap-2 bg-foreground/0 opacity-0 transition-all group-hover:bg-foreground/40 group-hover:opacity-100">
+        <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/0 opacity-0 transition-all group-hover:bg-black/40 group-hover:opacity-100">
           <Button
             variant="secondary"
             size="sm"
@@ -168,9 +187,8 @@ function TemplateCard({
         </div>
       </div>
 
-      {/* Info */}
       <div className="flex flex-col gap-1.5 p-3">
-        <h3 className="text-sm font-medium text-foreground leading-tight">
+        <h3 className="text-sm font-medium leading-tight text-foreground">
           {template.name}
         </h3>
         <div className="flex flex-wrap gap-1">
@@ -195,33 +213,6 @@ function TemplateCard({
         </div>
       </div>
     </div>
-  )
-}
-
-/* ------------------------------------------------------------------ */
-/*  Filter chip                                                        */
-/* ------------------------------------------------------------------ */
-function FilterChip({
-  label,
-  active,
-  onClick,
-}: {
-  label: string
-  active: boolean
-  onClick: () => void
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "inline-flex shrink-0 items-center rounded-full border px-3 py-1 text-xs font-medium transition-all cursor-pointer",
-        active
-          ? "border-foreground bg-foreground text-primary-foreground"
-          : "border-border bg-card text-foreground hover:border-foreground/30"
-      )}
-    >
-      {label}
-    </button>
   )
 }
 
@@ -276,11 +267,11 @@ export function ChooseDesignModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex h-[90vh] max-h-[720px] w-full max-w-[calc(100%-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-4xl lg:max-w-5xl">
+      <DialogContent className="flex h-[85vh] max-h-[700px] w-[calc(100%-2rem)] max-w-5xl flex-col gap-0 overflow-hidden p-0">
         {/* Header */}
         <div className="shrink-0 border-b border-border px-5 py-4 sm:px-6">
           <DialogHeader>
-            <DialogTitle className="font-serif text-lg tracking-tight">
+            <DialogTitle className="text-lg tracking-tight">
               Choose a Design
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
@@ -291,7 +282,7 @@ export function ChooseDesignModal({
 
         {/* Body */}
         <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-          {/* Sidebar filters — visible on desktop */}
+          {/* Sidebar filters (desktop) */}
           <aside className="hidden shrink-0 border-r border-border lg:flex lg:w-[220px] lg:flex-col">
             <ScrollArea className="flex-1 px-5 py-4">
               <div className="flex flex-col gap-5">
@@ -357,7 +348,13 @@ export function ChooseDesignModal({
                     {(["all", "free", "premium"] as const).map((tier) => (
                       <FilterChip
                         key={tier}
-                        label={tier === "all" ? "All" : tier === "free" ? "Free" : "Premium"}
+                        label={
+                          tier === "all"
+                            ? "All"
+                            : tier === "free"
+                              ? "Free"
+                              : "Premium"
+                        }
                         active={tierFilter === tier}
                         onClick={() => setTierFilter(tier)}
                       />
@@ -379,9 +376,8 @@ export function ChooseDesignModal({
             </ScrollArea>
           </aside>
 
-          {/* Mobile filters — horizontal strip */}
+          {/* Mobile filters (horizontal strips) */}
           <div className="flex shrink-0 flex-col gap-2.5 border-b border-border px-4 py-3 lg:hidden">
-            {/* Search */}
             <div className="relative">
               <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -391,7 +387,6 @@ export function ChooseDesignModal({
                 className="h-8 pl-8 text-xs"
               />
             </div>
-            {/* Horizontal chip rows */}
             <div className="flex gap-1.5 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {EVENT_THEMES.map((theme) => (
                 <FilterChip
@@ -419,7 +414,13 @@ export function ChooseDesignModal({
               {(["all", "free", "premium"] as const).map((tier) => (
                 <FilterChip
                   key={tier}
-                  label={tier === "all" ? "All" : tier === "free" ? "Free" : "Premium"}
+                  label={
+                    tier === "all"
+                      ? "All"
+                      : tier === "free"
+                        ? "Free"
+                        : "Premium"
+                  }
                   active={tierFilter === tier}
                   onClick={() => setTierFilter(tier)}
                 />
@@ -450,9 +451,10 @@ export function ChooseDesignModal({
                   )}
                 </div>
               ) : (
-                <>
-                  <p className="mb-3 text-xs text-muted-foreground">
-                    {filtered.length} template{filtered.length !== 1 ? "s" : ""}
+                <div className="flex flex-col gap-3">
+                  <p className="text-xs text-muted-foreground">
+                    {filtered.length} template
+                    {filtered.length !== 1 ? "s" : ""}
                   </p>
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {filtered.map((template) => (
@@ -465,7 +467,7 @@ export function ChooseDesignModal({
                       />
                     ))}
                   </div>
-                </>
+                </div>
               )}
             </div>
           </ScrollArea>

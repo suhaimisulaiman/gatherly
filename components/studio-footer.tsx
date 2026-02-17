@@ -30,7 +30,6 @@ export function StudioFooter({
           <span>Back</span>
         </Button>
 
-        {/* Step dots */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1">
             {Array.from({ length: totalSteps }, (_, i) => (
@@ -46,7 +45,7 @@ export function StudioFooter({
               />
             ))}
           </div>
-          <span className="text-xs tabular-nums text-muted-foreground font-medium">
+          <span className="text-xs font-medium tabular-nums text-muted-foreground">
             {currentStep}/{totalSteps}
           </span>
         </div>
@@ -62,7 +61,7 @@ export function StudioFooter({
         </Button>
       </div>
 
-      <p className="text-[11px] text-muted-foreground/70 tracking-wide">
+      <p className="text-[11px] tracking-wide text-muted-foreground/70">
         Preview may not fully match the final output
       </p>
     </div>

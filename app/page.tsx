@@ -56,13 +56,11 @@ export default function InvitationStudioPage() {
     <div className="flex min-h-svh flex-col bg-background">
       {/* Header */}
       <header className="flex items-center justify-between border-b border-border px-4 py-3 lg:px-8">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <div className="size-7 rounded-md bg-foreground" />
-            <span className="text-sm font-semibold tracking-tight text-foreground">
-              Invitation Studio
-            </span>
-          </div>
+        <div className="flex items-center gap-2">
+          <div className="size-7 rounded-md bg-foreground" />
+          <span className="text-sm font-semibold tracking-tight text-foreground">
+            Invitation Studio
+          </span>
         </div>
 
         <div className="hidden items-center gap-1.5 md:flex">
@@ -97,14 +95,14 @@ export default function InvitationStudioPage() {
 
       {/* Main content */}
       <main className="flex flex-1 flex-col md:flex-row">
-        {/* Left Panel — Desktop only */}
+        {/* Left Panel (desktop only) */}
         <aside className="hidden md:flex md:w-[380px] lg:w-[420px] flex-col border-r border-border">
           <div className="flex-1 overflow-y-auto px-6 py-6 lg:px-8">
             <div className="mb-5">
-              <h1 className="font-serif text-lg font-semibold tracking-tight text-foreground">
+              <h1 className="text-lg font-semibold tracking-tight text-foreground">
                 Customize Your Invitation
               </h1>
-              <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">
+              <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
                 Configure every detail of your digital card
               </p>
             </div>
@@ -112,7 +110,7 @@ export default function InvitationStudioPage() {
           </div>
         </aside>
 
-        {/* Right Panel — Preview */}
+        {/* Right Panel (preview) */}
         <section className="flex flex-1 flex-col" aria-label="Invitation preview">
           <div className="flex flex-1 items-center justify-center px-4 py-8 md:py-0">
             <InvitationPreview
@@ -125,17 +123,12 @@ export default function InvitationStudioPage() {
             />
           </div>
 
-          {/* Footer / Stepper */}
           <div className="border-t border-border px-4 py-3 md:px-8 md:py-4">
             <StudioFooter
               currentStep={currentStep}
               totalSteps={totalSteps}
-              onBack={() =>
-                setCurrentStep((prev) => Math.max(1, prev - 1))
-              }
-              onNext={() =>
-                setCurrentStep((prev) => Math.min(totalSteps, prev + 1))
-              }
+              onBack={() => setCurrentStep((s) => Math.max(1, s - 1))}
+              onNext={() => setCurrentStep((s) => Math.min(totalSteps, s + 1))}
             />
           </div>
         </section>

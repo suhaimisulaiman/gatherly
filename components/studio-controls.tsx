@@ -53,7 +53,7 @@ export function StudioControls({
       <div className="flex flex-col gap-2">
         <Label
           htmlFor="language"
-          className="text-xs tracking-[0.1em] uppercase text-muted-foreground font-medium"
+          className="text-xs font-medium uppercase tracking-[0.1em] text-muted-foreground"
         >
           Card Language
         </Label>
@@ -71,7 +71,7 @@ export function StudioControls({
 
       {/* Package */}
       <div className="flex flex-col gap-2">
-        <Label className="text-xs tracking-[0.1em] uppercase text-muted-foreground font-medium">
+        <Label className="text-xs font-medium uppercase tracking-[0.1em] text-muted-foreground">
           Package
         </Label>
         <div className="grid grid-cols-3 gap-2">
@@ -79,7 +79,7 @@ export function StudioControls({
             <button
               key={pkg}
               onClick={() => setPackageType(pkg)}
-              className={`relative flex flex-col items-center gap-1 rounded-lg border px-3 py-3 text-xs transition-all cursor-pointer ${
+              className={`relative flex cursor-pointer flex-col items-center gap-1 rounded-lg border px-3 py-3 text-xs transition-all ${
                 packageType === pkg
                   ? "border-foreground bg-foreground text-primary-foreground"
                   : "border-border bg-card text-foreground hover:border-foreground/30"
@@ -89,7 +89,7 @@ export function StudioControls({
               {pkg === "gold" && (
                 <Badge
                   variant="secondary"
-                  className="absolute -top-2 -right-2 text-[9px] px-1.5 py-0"
+                  className="absolute -top-2 -right-2 px-1.5 py-0 text-[9px]"
                 >
                   Popular
                 </Badge>
@@ -101,7 +101,7 @@ export function StudioControls({
 
       {/* Add-ons */}
       <div className="flex flex-col gap-3">
-        <Label className="text-xs tracking-[0.1em] uppercase text-muted-foreground font-medium">
+        <Label className="text-xs font-medium uppercase tracking-[0.1em] text-muted-foreground">
           Add-ons
         </Label>
         <Card className="border-border bg-card shadow-none">
@@ -143,12 +143,12 @@ export function StudioControls({
 
       {/* Design Selection */}
       <div className="flex flex-col gap-2">
-        <Label className="text-xs tracking-[0.1em] uppercase text-muted-foreground font-medium">
+        <Label className="text-xs font-medium uppercase tracking-[0.1em] text-muted-foreground">
           Design
         </Label>
         <Button
           variant="outline"
-          className="w-full justify-between bg-card border-border h-10"
+          className="h-10 w-full justify-between border-border bg-card"
           onClick={onChooseDesign}
         >
           <span className="flex items-center gap-2 text-foreground">
@@ -161,7 +161,7 @@ export function StudioControls({
 
       {/* Opening Style */}
       <div className="flex flex-col gap-2">
-        <Label className="text-xs tracking-[0.1em] uppercase text-muted-foreground font-medium">
+        <Label className="text-xs font-medium uppercase tracking-[0.1em] text-muted-foreground">
           Opening Style
         </Label>
         <Select value={openingStyle} onValueChange={setOpeningStyle}>
@@ -179,7 +179,7 @@ export function StudioControls({
 
       {/* Animated Effect */}
       <div className="flex flex-col gap-2">
-        <Label className="text-xs tracking-[0.1em] uppercase text-muted-foreground font-medium">
+        <Label className="text-xs font-medium uppercase tracking-[0.1em] text-muted-foreground">
           Animated Effect
         </Label>
         <Select value={animatedEffect} onValueChange={setAnimatedEffect}>
