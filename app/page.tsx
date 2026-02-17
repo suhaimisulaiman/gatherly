@@ -2,10 +2,10 @@
 
 import { useState } from "react"
 import { Menu } from "lucide-react"
-import { InteractiveInvitationPreview } from "@/components/interactive-invitation-preview"
+import { InvitationPreview } from "@/components/invitation-preview"
 import { StudioControls } from "@/components/studio-controls"
 import { StudioFooter } from "@/components/studio-footer"
-import { ChooseDesignModal } from "@/components/choose-design-modal"
+import { ChooseDesignModal, type SelectedTemplate } from "@/components/choose-design-modal"
 import { Button } from "@/components/ui/button"
 import {
   Sheet,
@@ -18,21 +18,19 @@ import {
 export default function InvitationStudioPage() {
   const [language, setLanguage] = useState("english")
   const [packageType, setPackageType] = useState("gold")
-  const [openingStyle, setOpeningStyle] = useState("Slide Up")
+  const [openingStyle, setOpeningStyle] = useState("Circle Gate")
   const [animatedEffect, setAnimatedEffect] = useState("none")
   const [backgroundMusic, setBackgroundMusic] = useState(false)
   const [guestName, setGuestName] = useState(true)
   const [currentStep, setCurrentStep] = useState(1)
   const [sheetOpen, setSheetOpen] = useState(false)
   const [designModalOpen, setDesignModalOpen] = useState(false)
-  const [templateId, setTemplateId] = useState<string | undefined>(undefined)
-  const [templateName, setTemplateName] = useState("")
+  const [selectedTemplate, setSelectedTemplate] = useState<SelectedTemplate | null>(null)
 
   const totalSteps = 10
 
-  function handleSelectTemplate(template: { id: string; name: string }) {
-    setTemplateId(template.id)
-    setTemplateName(template.name)
+  function handleSelectTemplate(template: SelectedTemplate) {
+    setSelectedTemplate(template)
   }
 
   const controlsProps = {
@@ -48,7 +46,8 @@ export default function InvitationStudioPage() {
     setBackgroundMusic,
     guestName,
     setGuestName,
-    templateName,
+    templateName: selectedTemplate?.name || "",
+    templateThumbnail: selectedTemplate?.thumbnail,
     onChooseDesign: () => setDesignModalOpen(true),
   }
 
@@ -62,13 +61,10 @@ export default function InvitationStudioPage() {
             Invitation Studio
           </span>
         </div>
-
         <div className="hidden items-center gap-1.5 md:flex">
           <span className="text-xs text-muted-foreground">Auto-saved</span>
           <div className="size-1.5 rounded-full bg-emerald-500" />
         </div>
-
-        {/* Mobile sheet trigger */}
         <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
           <SheetTrigger asChild>
             <Button
@@ -93,9 +89,9 @@ export default function InvitationStudioPage() {
         </Sheet>
       </header>
 
-      {/* Main content */}
+      {/* Main */}
       <main className="flex flex-1 flex-col md:flex-row">
-        {/* Left Panel (desktop only) */}
+        {/* Left panel (desktop) */}
         <aside className="hidden md:flex md:w-[380px] lg:w-[420px] flex-col border-r border-border">
           <div className="flex-1 overflow-y-auto px-6 py-6 lg:px-8">
             <div className="mb-5">
@@ -110,12 +106,22 @@ export default function InvitationStudioPage() {
           </div>
         </aside>
 
-        {/* Right Panel (preview) */}
+        {/* Right panel (preview) */}
         <section className="flex flex-1 flex-col" aria-label="Invitation preview">
           <div className="flex flex-1 items-center justify-center px-4 py-6 md:py-0">
-            <InteractiveInvitationPreview />
+            <InvitationPreview
+              templateId={selectedTemplate?.id}
+              templateName={selectedTemplate?.name}
+              templateThumbnail={selectedTemplate?.thumbnail}
+              colors={selectedTemplate?.colors}
+              openingStyle={openingStyle}
+              animatedEffect={animatedEffect}
+              language={language}
+              packageType={packageType}
+              backgroundMusic={backgroundMusic}
+              guestName={guestName}
+            />
           </div>
-
           <div className="border-t border-border px-4 py-3 md:px-8 md:py-4">
             <StudioFooter
               currentStep={currentStep}
@@ -127,12 +133,12 @@ export default function InvitationStudioPage() {
         </section>
       </main>
 
-      {/* Design gallery modal */}
+      {/* Design modal */}
       <ChooseDesignModal
         open={designModalOpen}
         onOpenChange={setDesignModalOpen}
         onSelectTemplate={handleSelectTemplate}
-        selectedTemplateId={templateId}
+        selectedTemplateId={selectedTemplate?.id}
       />
     </div>
   )

@@ -1,6 +1,6 @@
 "use client"
 
-import { Palette, Sparkles } from "lucide-react"
+import { Palette, Sparkles, Check } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import {
@@ -28,6 +28,7 @@ interface StudioControlsProps {
   guestName: boolean
   setGuestName: (value: boolean) => void
   templateName: string
+  templateThumbnail?: string
   onChooseDesign: () => void
 }
 
@@ -45,6 +46,7 @@ export function StudioControls({
   guestName,
   setGuestName,
   templateName,
+  templateThumbnail,
   onChooseDesign,
 }: StudioControlsProps) {
   return (
@@ -108,12 +110,8 @@ export function StudioControls({
           <CardContent className="flex flex-col gap-4 p-4">
             <div className="flex items-center justify-between">
               <div className="flex flex-col gap-0.5">
-                <span className="text-sm font-medium text-foreground">
-                  Background Music
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  Add ambient audio to your card
-                </span>
+                <span className="text-sm font-medium text-foreground">Background Music</span>
+                <span className="text-xs text-muted-foreground">Add ambient audio to your card</span>
               </div>
               <Switch
                 checked={backgroundMusic}
@@ -124,12 +122,8 @@ export function StudioControls({
             <div className="h-px bg-border" />
             <div className="flex items-center justify-between">
               <div className="flex flex-col gap-0.5">
-                <span className="text-sm font-medium text-foreground">
-                  Guest Name
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  Personalize each invitation
-                </span>
+                <span className="text-sm font-medium text-foreground">Guest Name</span>
+                <span className="text-xs text-muted-foreground">Personalize each invitation</span>
               </div>
               <Switch
                 checked={guestName}
@@ -146,17 +140,40 @@ export function StudioControls({
         <Label className="text-xs font-medium uppercase tracking-[0.1em] text-muted-foreground">
           Design
         </Label>
-        <Button
-          variant="outline"
-          className="h-10 w-full justify-between border-border bg-card"
-          onClick={onChooseDesign}
-        >
-          <span className="flex items-center gap-2 text-foreground">
-            <Palette className="size-4 text-muted-foreground" />
-            {templateName || "Choose Design"}
-          </span>
-          <span className="text-xs text-muted-foreground">Browse</span>
-        </Button>
+        {templateName ? (
+          <div className="flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2.5">
+            {templateThumbnail && (
+              <div className="size-9 shrink-0 overflow-hidden rounded-md">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={templateThumbnail} alt="" className="size-full object-cover" />
+              </div>
+            )}
+            <div className="flex flex-1 flex-col">
+              <span className="text-sm font-medium text-foreground">{templateName}</span>
+              <span className="flex items-center gap-1 text-[10px] text-emerald-600">
+                <Check className="size-2.5" /> Selected
+              </span>
+            </div>
+            <button
+              onClick={onChooseDesign}
+              className="text-xs font-medium text-muted-foreground underline underline-offset-2 hover:text-foreground"
+            >
+              Change
+            </button>
+          </div>
+        ) : (
+          <Button
+            variant="outline"
+            className="h-10 w-full justify-between border-border bg-card"
+            onClick={onChooseDesign}
+          >
+            <span className="flex items-center gap-2 text-foreground">
+              <Palette className="size-4 text-muted-foreground" />
+              Choose Design
+            </span>
+            <span className="text-xs text-muted-foreground">Browse</span>
+          </Button>
+        )}
       </div>
 
       {/* Opening Style */}
@@ -164,17 +181,21 @@ export function StudioControls({
         <Label className="text-xs font-medium uppercase tracking-[0.1em] text-muted-foreground">
           Opening Style
         </Label>
-        <Select value={openingStyle} onValueChange={setOpeningStyle}>
-          <SelectTrigger className="w-full bg-card">
-            <SelectValue placeholder="Select style" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Slide Up">Slide Up</SelectItem>
-            <SelectItem value="Fade In">Fade In</SelectItem>
-            <SelectItem value="Flip">Flip</SelectItem>
-            <SelectItem value="Zoom">Zoom</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="grid grid-cols-2 gap-2">
+          {["Circle Gate", "Window"].map((style) => (
+            <button
+              key={style}
+              onClick={() => setOpeningStyle(style)}
+              className={`flex cursor-pointer items-center justify-center rounded-lg border px-3 py-2.5 text-xs font-medium transition-all ${
+                openingStyle === style
+                  ? "border-foreground bg-foreground text-primary-foreground"
+                  : "border-border bg-card text-foreground hover:border-foreground/30"
+              }`}
+            >
+              {style}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Animated Effect */}
@@ -182,23 +203,22 @@ export function StudioControls({
         <Label className="text-xs font-medium uppercase tracking-[0.1em] text-muted-foreground">
           Animated Effect
         </Label>
-        <Select value={animatedEffect} onValueChange={setAnimatedEffect}>
-          <SelectTrigger className="w-full bg-card">
-            <SelectValue placeholder="Select effect" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="none">None</SelectItem>
-            <SelectItem value="Confetti">
-              <span className="flex items-center gap-2">
-                <Sparkles className="size-3.5" />
-                Confetti
-              </span>
-            </SelectItem>
-            <SelectItem value="Petals">Petals</SelectItem>
-            <SelectItem value="Stars">Stars</SelectItem>
-            <SelectItem value="Hearts">Hearts</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="grid grid-cols-3 gap-2">
+          {["none", "Floating Dots", "Confetti"].map((effect) => (
+            <button
+              key={effect}
+              onClick={() => setAnimatedEffect(effect)}
+              className={`flex cursor-pointer items-center justify-center gap-1 rounded-lg border px-2 py-2.5 text-xs font-medium transition-all ${
+                animatedEffect === effect
+                  ? "border-foreground bg-foreground text-primary-foreground"
+                  : "border-border bg-card text-foreground hover:border-foreground/30"
+              }`}
+            >
+              {effect !== "none" && <Sparkles className="size-3" />}
+              {effect === "none" ? "None" : effect}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   )
