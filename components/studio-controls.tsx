@@ -13,14 +13,6 @@ import {
 import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogDescription,
-} from "@/components/ui/dialog"
 
 interface StudioControlsProps {
   language: string
@@ -35,6 +27,8 @@ interface StudioControlsProps {
   setBackgroundMusic: (value: boolean) => void
   guestName: boolean
   setGuestName: (value: boolean) => void
+  templateName: string
+  onChooseDesign: () => void
 }
 
 export function StudioControls({
@@ -50,6 +44,8 @@ export function StudioControls({
   setBackgroundMusic,
   guestName,
   setGuestName,
+  templateName,
+  onChooseDesign,
 }: StudioControlsProps) {
   return (
     <div className="flex flex-col gap-5">
@@ -150,31 +146,17 @@ export function StudioControls({
         <Label className="text-xs tracking-[0.1em] uppercase text-muted-foreground font-medium">
           Design
         </Label>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button
-              variant="outline"
-              className="w-full justify-between bg-card border-border h-10"
-            >
-              <span className="flex items-center gap-2 text-foreground">
-                <Palette className="size-4 text-muted-foreground" />
-                Choose Design
-              </span>
-              <span className="text-xs text-muted-foreground">Browse</span>
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Choose a Design</DialogTitle>
-              <DialogDescription>
-                Browse our collection of premium invitation designs.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="flex items-center justify-center py-16 text-sm text-muted-foreground">
-              Design gallery will appear here
-            </div>
-          </DialogContent>
-        </Dialog>
+        <Button
+          variant="outline"
+          className="w-full justify-between bg-card border-border h-10"
+          onClick={onChooseDesign}
+        >
+          <span className="flex items-center gap-2 text-foreground">
+            <Palette className="size-4 text-muted-foreground" />
+            {templateName || "Choose Design"}
+          </span>
+          <span className="text-xs text-muted-foreground">Browse</span>
+        </Button>
       </div>
 
       {/* Opening Style */}

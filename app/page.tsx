@@ -5,6 +5,7 @@ import { Menu } from "lucide-react"
 import { InvitationPreview } from "@/components/invitation-preview"
 import { StudioControls } from "@/components/studio-controls"
 import { StudioFooter } from "@/components/studio-footer"
+import { ChooseDesignModal } from "@/components/choose-design-modal"
 import { Button } from "@/components/ui/button"
 import {
   Sheet,
@@ -23,8 +24,16 @@ export default function InvitationStudioPage() {
   const [guestName, setGuestName] = useState(true)
   const [currentStep, setCurrentStep] = useState(1)
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [designModalOpen, setDesignModalOpen] = useState(false)
+  const [templateId, setTemplateId] = useState<string | undefined>(undefined)
+  const [templateName, setTemplateName] = useState("")
 
   const totalSteps = 10
+
+  function handleSelectTemplate(template: { id: string; name: string }) {
+    setTemplateId(template.id)
+    setTemplateName(template.name)
+  }
 
   const controlsProps = {
     language,
@@ -39,6 +48,8 @@ export default function InvitationStudioPage() {
     setBackgroundMusic,
     guestName,
     setGuestName,
+    templateName,
+    onChooseDesign: () => setDesignModalOpen(true),
   }
 
   return (
@@ -129,6 +140,14 @@ export default function InvitationStudioPage() {
           </div>
         </section>
       </main>
+
+      {/* Design gallery modal */}
+      <ChooseDesignModal
+        open={designModalOpen}
+        onOpenChange={setDesignModalOpen}
+        onSelectTemplate={handleSelectTemplate}
+        selectedTemplateId={templateId}
+      />
     </div>
   )
 }
