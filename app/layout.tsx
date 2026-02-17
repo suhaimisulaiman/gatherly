@@ -1,16 +1,10 @@
-import type { Metadata, Viewport } from 'next'
-import { Inter, Playfair_Display } from 'next/font/google'
+import type { Metadata } from 'next'
+import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 
-const _inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
-const _playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" });
-
-export const viewport: Viewport = {
-  themeColor: '#f5f3f0',
-  width: 'device-width',
-  initialScale: 1,
-}
+const _geist = Geist({ subsets: ["latin"] })
+const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: 'Invitation Studio',
@@ -41,7 +35,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${_inter.variable} ${_playfair.variable}`}>
+    <html lang="en">
       <body className="font-sans antialiased">
         {children}
         <Analytics />
