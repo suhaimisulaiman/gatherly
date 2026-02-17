@@ -33,6 +33,7 @@ export interface SelectedTemplate {
   name: string
   thumbnail: string
   colors: { bg: string; text: string; accent: string; muted: string }
+  design: Template["design"]
 }
 
 interface ChooseDesignModalProps {
@@ -225,6 +226,7 @@ export function ChooseDesignModal({
       name: template.name,
       thumbnail: template.thumbnail,
       colors: template.colors,
+      design: template.design,
     })
     onOpenChange(false)
   }

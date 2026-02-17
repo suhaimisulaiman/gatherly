@@ -114,6 +114,7 @@ export default function InvitationStudioPage() {
               templateName={selectedTemplate?.name}
               templateThumbnail={selectedTemplate?.thumbnail}
               colors={selectedTemplate?.colors}
+              design={selectedTemplate?.design}
               openingStyle={openingStyle}
               animatedEffect={animatedEffect}
               language={language}
