@@ -1,6 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Menu } from "lucide-react"
 import { InvitationPreview } from "@/components/invitation-preview"
 import { StudioControls } from "@/components/studio-controls"
@@ -14,14 +16,18 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
+import { TEMPLATES } from "@/lib/templates"
 
-export default function InvitationStudioPage() {
+const WEDDING_DEFAULT_MUSIC_URL = "https://www.youtube.com/watch?v=0J7R20ycaU4&t=7"
+
+export default function GatherlyPage() {
+  const router = useRouter()
   const [language, setLanguage] = useState("english")
   const [packageType, setPackageType] = useState("gold")
   const [openingStyle, setOpeningStyle] = useState("Circle Gate")
   const [animatedEffect, setAnimatedEffect] = useState("none")
   const [backgroundMusic, setBackgroundMusic] = useState(false)
-  const [guestName, setGuestName] = useState(true)
+  const [backgroundMusicYoutubeUrl, setBackgroundMusicYoutubeUrl] = useState("")
   const [currentStep, setCurrentStep] = useState(1)
   const [sheetOpen, setSheetOpen] = useState(false)
   const [designModalOpen, setDesignModalOpen] = useState(false)
@@ -32,6 +38,16 @@ export default function InvitationStudioPage() {
   function handleSelectTemplate(template: SelectedTemplate) {
     setSelectedTemplate(template)
   }
+
+  const isWeddingTemplate = selectedTemplate
+    ? TEMPLATES.find((t) => t.id === selectedTemplate.id)?.themes?.includes("Wedding")
+    : false
+
+  useEffect(() => {
+    if (isWeddingTemplate && !backgroundMusicYoutubeUrl) {
+      setBackgroundMusicYoutubeUrl(WEDDING_DEFAULT_MUSIC_URL)
+    }
+  }, [isWeddingTemplate, backgroundMusicYoutubeUrl])
 
   const controlsProps = {
     language,
@@ -44,8 +60,8 @@ export default function InvitationStudioPage() {
     setAnimatedEffect,
     backgroundMusic,
     setBackgroundMusic,
-    guestName,
-    setGuestName,
+    backgroundMusicYoutubeUrl,
+    setBackgroundMusicYoutubeUrl,
     templateName: selectedTemplate?.name || "",
     templateThumbnail: selectedTemplate?.thumbnail,
     onChooseDesign: () => setDesignModalOpen(true),
@@ -55,12 +71,12 @@ export default function InvitationStudioPage() {
     <div className="flex min-h-svh flex-col bg-background">
       {/* Header */}
       <header className="flex items-center justify-between border-b border-border px-4 py-3 lg:px-8">
-        <div className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2">
           <div className="size-7 rounded-md bg-foreground" />
           <span className="text-sm font-semibold tracking-tight text-foreground">
-            Invitation Studio
+            Gatherly
           </span>
-        </div>
+        </Link>
         <div className="hidden items-center gap-1.5 md:flex">
           <span className="text-xs text-muted-foreground">Auto-saved</span>
           <div className="size-1.5 rounded-full bg-emerald-500" />
@@ -115,12 +131,15 @@ export default function InvitationStudioPage() {
               templateThumbnail={selectedTemplate?.thumbnail}
               colors={selectedTemplate?.colors}
               design={selectedTemplate?.design}
+              envelopeIntro={selectedTemplate?.envelopeIntro}
               openingStyle={openingStyle}
               animatedEffect={animatedEffect}
               language={language}
               packageType={packageType}
               backgroundMusic={backgroundMusic}
-              guestName={guestName}
+              backgroundMusicYoutubeUrl={backgroundMusicYoutubeUrl}
+              guestName={true}
+              previewGuestName="Encik Ahmad & Family"
             />
           </div>
           <div className="border-t border-border px-4 py-3 md:px-8 md:py-4">
@@ -128,7 +147,29 @@ export default function InvitationStudioPage() {
               currentStep={currentStep}
               totalSteps={totalSteps}
               onBack={() => setCurrentStep((s) => Math.max(1, s - 1))}
-              onNext={() => setCurrentStep((s) => Math.min(totalSteps, s + 1))}
+              nextDisabled={currentStep === 1 && !selectedTemplate}
+              onNext={() => {
+                if (currentStep === 1) {
+                  if (selectedTemplate) {
+                    try {
+                      sessionStorage.setItem("studio:selectedTemplate", JSON.stringify(selectedTemplate))
+                      sessionStorage.setItem("studio:step1Options", JSON.stringify({
+                        language,
+                        packageType,
+                        openingStyle,
+                        animatedEffect,
+                        backgroundMusic,
+                        backgroundMusicYoutubeUrl,
+                      }))
+                    } catch {
+                      /* ignore */
+                    }
+                  }
+                  router.push("/events/default/studio")
+                } else {
+                  setCurrentStep((s) => Math.min(totalSteps, s + 1))
+                }
+              }}
             />
           </div>
         </section>

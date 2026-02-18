@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import "./globals.css"
+import { Toaster } from "@/components/ui/toaster"
 
 const geistSans = Geist({
   subsets: ["latin"],
@@ -12,8 +13,8 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "Invitation Studio",
-  description: "Design beautiful digital invitations with our premium studio",
+  title: "Gatherly",
+  description: "Design beautiful digital invitations with Gatherly",
 }
 
 export default function RootLayout({
@@ -23,7 +24,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body className="font-sans antialiased">{children}</body>
+      <body className="font-sans antialiased">{children}<Toaster /></body>
     </html>
   )
 }

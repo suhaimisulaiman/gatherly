@@ -40,6 +40,16 @@ export interface TemplateDesign {
   accentShape: "circle" | "square" | "diamond" | "arch"
 }
 
+/** Envelope intro block config - first screen of invitation */
+export type EnvelopeIntroVariant = "classicWax" | "minimalWax" | "floralWax"
+
+export interface EnvelopeIntroBlockConfig {
+  type: "envelopeIntro"
+  variant?: EnvelopeIntroVariant
+  /** Monogram initials on the wax seal (e.g. "SA" for Sarah & Ahmed) */
+  sealInitials?: string
+}
+
 export interface Template {
   id: string
   name: string
@@ -50,6 +60,8 @@ export interface Template {
   tags: string[]
   colors: TemplateThemeColors
   design: TemplateDesign
+  /** Optional first block - envelope intro. When present, shown before hero. */
+  envelopeIntro?: EnvelopeIntroBlockConfig
 }
 
 export const EVENT_THEMES: EventTheme[] = [
@@ -74,7 +86,7 @@ export const TEMPLATES: Template[] = [
   {
     id: "elegant-rose",
     name: "Elegant Rose",
-    thumbnail: "/templates/elegant-rose.jpg",
+    thumbnail: "/templates/elegant-rose.svg",
     themes: ["Wedding"],
     styles: ["Floral", "Elegant"],
     tier: "premium",
@@ -95,7 +107,7 @@ export const TEMPLATES: Template[] = [
   {
     id: "golden-arch",
     name: "Golden Arch",
-    thumbnail: "/templates/golden-arch.jpg",
+    thumbnail: "/templates/golden-arch.svg",
     themes: ["Wedding", "E-Day"],
     styles: ["Elegant", "Modern"],
     tier: "premium",
@@ -116,7 +128,7 @@ export const TEMPLATES: Template[] = [
   {
     id: "sakura-bloom",
     name: "Sakura Bloom",
-    thumbnail: "/templates/sakura-bloom.jpg",
+    thumbnail: "/templates/sakura-bloom.svg",
     themes: ["Birthday"],
     styles: ["Cute", "Floral"],
     tier: "free",
@@ -133,11 +145,12 @@ export const TEMPLATES: Template[] = [
       borderRadius: "20px",
       accentShape: "circle",
     },
+    envelopeIntro: { type: "envelopeIntro", variant: "classicWax", sealInitials: "SB" },
   },
   {
     id: "midnight-garden",
     name: "Midnight Garden",
-    thumbnail: "/templates/midnight-garden.jpg",
+    thumbnail: "/templates/midnight-garden.svg",
     themes: ["Wedding", "E-Day"],
     styles: ["Elegant", "Modern"],
     tier: "premium",
@@ -158,7 +171,7 @@ export const TEMPLATES: Template[] = [
   {
     id: "corporate-slate",
     name: "Corporate Slate",
-    thumbnail: "/templates/corporate-slate.jpg",
+    thumbnail: "/templates/corporate-slate.svg",
     themes: ["Corporate", "Open House"],
     styles: ["Minimal", "Modern"],
     tier: "free",
@@ -179,7 +192,7 @@ export const TEMPLATES: Template[] = [
   {
     id: "tropical-fiesta",
     name: "Tropical Fiesta",
-    thumbnail: "/templates/tropical-fiesta.jpg",
+    thumbnail: "/templates/tropical-fiesta.svg",
     themes: ["Birthday", "Open House"],
     styles: ["Modern", "Cute"],
     tier: "free",
@@ -200,7 +213,7 @@ export const TEMPLATES: Template[] = [
   {
     id: "rustic-kraft",
     name: "Rustic Kraft",
-    thumbnail: "/templates/rustic-kraft.jpg",
+    thumbnail: "/templates/rustic-kraft.svg",
     themes: ["Wedding"],
     styles: ["Traditional", "Floral"],
     tier: "free",
@@ -221,7 +234,7 @@ export const TEMPLATES: Template[] = [
   {
     id: "baby-clouds",
     name: "Baby Clouds",
-    thumbnail: "/templates/baby-clouds.jpg",
+    thumbnail: "/templates/baby-clouds.svg",
     themes: ["Baby/Aqiqah"],
     styles: ["Cute", "Minimal"],
     tier: "premium",
@@ -240,9 +253,30 @@ export const TEMPLATES: Template[] = [
     },
   },
   {
+    id: "kids-jungle-01",
+    name: "Kids Jungle",
+    thumbnail: "/templates/kids-jungle.svg",
+    themes: ["Birthday", "Baby/Aqiqah"],
+    styles: ["Cute", "Modern"],
+    tier: "free",
+    tags: ["jungle", "kids", "animal", "fun", "adventure"],
+    colors: { bg: "#f5f8e8", text: "#2d3a1e", accent: "#6b8e4e", muted: "#7a8a65" },
+    design: {
+      fontPairing: "sans",
+      headingWeight: "600",
+      letterSpacing: "0.02em",
+      decorator: "dots-scatter",
+      heroLayout: "centered",
+      divider: "dots",
+      bgPattern: "radial-gradient(circle at 20% 80%, #6b8e4e15 0%, transparent 40%), radial-gradient(circle at 80% 20%, #6b8e4e12 0%, transparent 35%)",
+      borderRadius: "16px",
+      accentShape: "circle",
+    },
+  },
+  {
     id: "islamic-geometric",
     name: "Islamic Geometric",
-    thumbnail: "/templates/islamic-geometric.jpg",
+    thumbnail: "/templates/islamic-geometric.svg",
     themes: ["Wedding", "E-Day", "Open House"],
     styles: ["Traditional", "Elegant"],
     tier: "premium",

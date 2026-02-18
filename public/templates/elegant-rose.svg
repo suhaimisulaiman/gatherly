@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" fill="none">
+  <rect width="400" height="300" fill="#fdf2f4"/>
+  <defs>
+    <radialGradient id="rose" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#c77d8a"/>
+      <stop offset="100%" stop-color="#c77d8a" stop-opacity="0.5"/>
+    </radialGradient>
+  </defs>
+  <circle cx="200" cy="150" r="60" fill="url(#rose)" opacity="0.4"/>
+  <circle cx="200" cy="150" r="40" fill="#c77d8a" opacity="0.6"/>
+  <path d="M180 130 Q200 110 220 130 Q240 150 220 170 Q200 190 180 170 Q160 150 180 130" fill="#c77d8a" opacity="0.5"/>
+  <ellipse cx="140" cy="120" rx="25" ry="35" fill="#c77d8a" opacity="0.3" transform="rotate(-30 140 120)"/>
+  <ellipse cx="260" cy="120" rx="25" ry="35" fill="#c77d8a" opacity="0.3" transform="rotate(30 260 120)"/>
+</svg>

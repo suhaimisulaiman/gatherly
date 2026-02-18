@@ -3,19 +3,27 @@
 import { useEffect, useState, useRef, useCallback } from "react"
 import {
   ChevronDown,
+  ChevronUp,
   Calendar,
+  CalendarPlus,
   Clock,
   MapPin,
-  Navigation,
   Heart,
   Send,
   Music,
   Phone,
 } from "lucide-react"
+import { SiGooglemaps, SiWaze } from "react-icons/si"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import type { TemplateThemeColors, TemplateDesign } from "@/lib/templates"
+import type { TemplateThemeColors, TemplateDesign, EnvelopeIntroBlockConfig } from "@/lib/templates"
+import { InvitationRenderer } from "@/components/invitation/InvitationRenderer"
+import { BackgroundMusicPlayer } from "@/components/BackgroundMusicPlayer"
+import { formatHijriDate } from "@/lib/hijri"
+import { generateIcs, downloadIcs } from "@/lib/generateIcs"
+import { loadGuestWishes, saveGuestWish, type GuestWish } from "@/lib/guestWishes"
+import { loadGuestRsvp, saveGuestRsvp, type GuestRsvp } from "@/lib/guestRsvp"
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -27,12 +35,65 @@ export interface InvitationPreviewProps {
   templateThumbnail?: string
   colors?: TemplateThemeColors
   design?: TemplateDesign
+  envelopeIntro?: EnvelopeIntroBlockConfig
   openingStyle: string
   animatedEffect: string
   language: string
   packageType: string
   backgroundMusic: boolean
+  /** YouTube video URL for background music (when backgroundMusic is true) */
+  backgroundMusicYoutubeUrl?: string
   guestName: boolean
+  /** For envelope "To:" line - real guest name */
+  envelopeGuestName?: string
+  /** For studio preview - mock guest name (e.g. "Encik Ahmad & Family") */
+  previewGuestName?: string
+  /** Main title (e.g. "Sayf Turns One!", "Aminah & Hakim") */
+  invitationTitle?: string
+  /** Optional names shown after title (e.g. bride and groom) */
+  hostNames?: string
+  /** Short greeting (e.g. "Join us to celebrate", "You're invited") */
+  shortGreeting?: string
+  /** Event type (e.g. Wedding Ceremony) - shown at top of hero */
+  eventType?: string
+  /** Event date (ISO string or empty) - shown in Date & Time section */
+  eventDate?: string
+  /** When true, show equivalent Hijri date alongside Gregorian */
+  includeHijriDate?: boolean
+  /** Event agenda items (time, title) - shown in Date & Time section */
+  eventAgenda?: Array<{ time?: string; title?: string }>
+  /** Venue name */
+  venue?: string
+  /** Address */
+  address?: string
+  /** Google Maps URL - opens when Maps button tapped */
+  googleMapsLink?: string
+  /** Waze URL - opens when Waze button tapped */
+  wazeLink?: string
+  /** Gallery photos (base64 data URLs or URLs) - max 20 */
+  galleryPhotos?: string[]
+  /** When true, show wishes section and allow guests to post */
+  enableWishes?: boolean
+  /** Sample wishes from host */
+  featuredWishes?: Array<{ name?: string; message?: string }>
+  /** Event ID for storing guest wishes (required for guest posting) */
+  eventId?: string
+  /** RSVP mode: guest-list or open */
+  rsvpMode?: "guest-list" | "open"
+  /** RSVP deadline (YYYY-MM-DD) */
+  rsvpDeadline?: string
+  /** Custom RSVP message */
+  rsvpMessage?: string
+  /** Max total guests (optional) */
+  maxGuests?: number
+  /** Max extra guests per invitee (0 = no extras) */
+  maxGuestsPerInvitee?: number
+  /** Wax seal initials override (e.g. "SA") */
+  sealInitials?: string
+  /** When true, start with invitation opened (skip gate) - e.g. for Screen 2 config */
+  defaultOpened?: boolean
+  /** When set, scroll the preview to this section (e.g. "datetime" for Screen 3) */
+  scrollToSection?: "hero" | "datetime" | "venue" | "gallery" | "wishes" | "rsvp"
   className?: string
 }
 
@@ -301,14 +362,14 @@ function ConfettiEffect() {
 
 function WindowGate({
   onOpen,
-  coupleName,
-  date,
+  guestLine,
+  inviteLine,
   colors,
   design,
 }: {
   onOpen: () => void
-  coupleName: string
-  date: string
+  guestLine: string
+  inviteLine: string
   colors: TemplateThemeColors
   design: TemplateDesign
 }) {
@@ -343,14 +404,13 @@ function WindowGate({
       {/* Center content */}
       {!opened && (
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 text-center">
-          <p className="text-[8px] uppercase tracking-[0.35em]" style={{ color: colors.muted }}>{"You're invited"}</p>
           <h2
             className={cn("text-base", design.fontPairing === "serif" ? "font-serif" : "font-sans")}
             style={{ color: colors.text, fontWeight: design.headingWeight, letterSpacing: design.letterSpacing }}
           >
-            {coupleName}
+            {guestLine}
           </h2>
-          <p className="text-[9px]" style={{ color: colors.muted }}>{date}</p>
+          {inviteLine && <p className="text-[8px] uppercase tracking-[0.35em]" style={{ color: colors.muted }}>{inviteLine}</p>}
           <button
             onClick={handleOpen}
             className="mt-1 px-5 py-2 text-[10px] font-semibold uppercase tracking-[0.15em] transition-transform hover:scale-105 active:scale-95"
@@ -366,14 +426,14 @@ function WindowGate({
 
 function CircleGate({
   onOpen,
-  coupleName,
-  date,
+  guestLine,
+  inviteLine,
   colors,
   design,
 }: {
   onOpen: () => void
-  coupleName: string
-  date: string
+  guestLine: string
+  inviteLine: string
   colors: TemplateThemeColors
   design: TemplateDesign
 }) {
@@ -391,14 +451,13 @@ function CircleGate({
     >
       <Decorator type={design.decorator} color={colors.accent} />
       <Divider style={design.divider} color={colors.accent} />
-      <p className="mt-4 text-[8px] uppercase tracking-[0.35em]" style={{ color: colors.muted }}>{"You're invited"}</p>
       <h2
-        className={cn("mt-3 text-lg leading-tight", design.fontPairing === "serif" ? "font-serif" : "font-sans")}
+        className={cn("mt-4 text-lg leading-tight", design.fontPairing === "serif" ? "font-serif" : "font-sans")}
         style={{ color: colors.text, fontWeight: design.headingWeight, letterSpacing: design.letterSpacing }}
       >
-        {coupleName}
+        {guestLine}
       </h2>
-      <p className="mt-2 text-[9px]" style={{ color: colors.muted }}>{date}</p>
+      {inviteLine && <p className="mt-3 text-[8px] uppercase tracking-[0.35em]" style={{ color: colors.muted }}>{inviteLine}</p>}
       <button
         onClick={handleOpen}
         className="mt-5 flex size-14 items-center justify-center rounded-full border-2 transition-transform hover:scale-105 active:scale-95"
@@ -407,6 +466,194 @@ function CircleGate({
         <span className="text-[9px] font-semibold uppercase tracking-[0.15em]">Open</span>
       </button>
       <ChevronDown className="mt-3 size-3.5 animate-bounce" style={{ color: colors.muted + "60" }} />
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Wishes form - guest post wish                                      */
+/* ------------------------------------------------------------------ */
+
+function WishesForm({
+  eventId,
+  onWishSubmit,
+  colors,
+  design,
+}: {
+  eventId: string
+  onWishSubmit: (wish: { name: string; message: string }) => void
+  colors: TemplateThemeColors
+  design: TemplateDesign
+}) {
+  const [name, setName] = useState("")
+  const [message, setMessage] = useState("")
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const n = name.trim()
+    const m = message.trim()
+    if (!n || !m) return
+    onWishSubmit({ name: n, message: m })
+    setName("")
+    setMessage("")
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="mt-4 flex w-full flex-col gap-2">
+      <input
+        type="text"
+        placeholder="Your name"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        className="w-full border px-2 py-1.5 text-[10px]"
+        style={{ borderColor: colors.accent + "40", borderRadius: design.borderRadius, color: colors.text }}
+      />
+      <textarea
+        placeholder="Your wish..."
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+        rows={2}
+        className="w-full resize-none border px-2 py-1.5 text-[10px]"
+        style={{ borderColor: colors.accent + "40", borderRadius: design.borderRadius, color: colors.text }}
+      />
+      <button
+        type="submit"
+        className="w-full py-1.5 text-[10px] font-medium"
+        style={{ background: colors.text, color: colors.bg, borderRadius: design.borderRadius }}
+      >
+        Post Wish
+      </button>
+    </form>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  RSVP section - guest can RSVP, update, and specify extra guests    */
+/* ------------------------------------------------------------------ */
+
+function RsvpSection({
+  eventId,
+  guestRsvp,
+  onRsvpChange,
+  maxGuestsPerInvitee,
+  colors,
+  design,
+}: {
+  eventId: string
+  guestRsvp: GuestRsvp | null
+  onRsvpChange: (rsvp: GuestRsvp | null) => void
+  maxGuestsPerInvitee: number
+  colors: TemplateThemeColors
+  design: TemplateDesign
+}) {
+  const [editing, setEditing] = useState(false)
+  const [response, setResponse] = useState<"attending" | "not-attending">("attending")
+  const [extraGuests, setExtraGuests] = useState(0)
+  const showForm = !guestRsvp || editing
+
+  const handleSubmit = () => {
+    const r: GuestRsvp = {
+      response,
+      extraGuests: response === "attending" ? Math.min(extraGuests, maxGuestsPerInvitee) : 0,
+    }
+    saveGuestRsvp(eventId, "preview", r)
+    onRsvpChange(r)
+    setEditing(false)
+  }
+
+  const handleChange = () => {
+    if (guestRsvp) {
+      setResponse(guestRsvp.response)
+      setExtraGuests(guestRsvp.extraGuests)
+    }
+    setEditing(true)
+  }
+
+  const needsExtraGuests = response === "attending" && maxGuestsPerInvitee > 0
+
+  if (showForm) {
+    return (
+      <div className="mt-4 flex flex-col gap-2">
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setResponse("attending")}
+            className={`flex-1 px-3 py-1.5 text-[10px] font-medium transition-colors ${response === "attending" ? "" : "opacity-60"}`}
+            style={{
+              background: response === "attending" ? colors.text : colors.accent + "20",
+              color: response === "attending" ? colors.bg : colors.text,
+              borderRadius: design.borderRadius,
+              border: response === "attending" ? undefined : `1px solid ${colors.accent}40`,
+            }}
+          >
+            Attending
+          </button>
+          <button
+            type="button"
+            onClick={() => setResponse("not-attending")}
+            className={`flex-1 border px-3 py-1.5 text-[10px] font-medium transition-colors ${response === "not-attending" ? "" : "opacity-60"}`}
+            style={{
+              borderColor: response === "not-attending" ? colors.text : colors.accent + "40",
+              background: response === "not-attending" ? colors.text : "transparent",
+              color: response === "not-attending" ? colors.bg : colors.text,
+              borderRadius: design.borderRadius,
+            }}
+          >
+            Not Attending
+          </button>
+        </div>
+        {needsExtraGuests && (
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="text-[9px]" style={{ color: colors.muted }}>
+              Extra guests:
+            </label>
+            <select
+              value={extraGuests}
+              onChange={(e) => setExtraGuests(parseInt(e.target.value, 10))}
+              className="border px-2 py-1 text-[10px]"
+              style={{ borderColor: colors.accent + "40", borderRadius: design.borderRadius, color: colors.text }}
+            >
+              {Array.from({ length: maxGuestsPerInvitee + 1 }, (_, i) => (
+                <option key={i} value={i}>{i}</option>
+              ))}
+            </select>
+            <span className="text-[9px]" style={{ color: colors.muted }}>(max {maxGuestsPerInvitee})</span>
+          </div>
+        )}
+        <button
+          type="button"
+          onClick={handleSubmit}
+          className="w-full py-1.5 text-[10px] font-medium"
+          style={{ background: colors.text, color: colors.bg, borderRadius: design.borderRadius }}
+        >
+          Submit
+        </button>
+        <p className="text-[9px]" style={{ color: colors.muted }}>
+          You can update your response anytime.
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="mt-4 flex flex-col gap-2">
+      <div className="border px-4 py-2" style={{ borderColor: colors.accent + "30", background: colors.accent + "10", borderRadius: design.borderRadius }}>
+        <p className="text-[10px] font-medium" style={{ color: colors.text }}>
+          {guestRsvp!.response === "attending"
+            ? guestRsvp!.extraGuests > 0
+              ? `You're attending with ${guestRsvp!.extraGuests} extra guest${guestRsvp!.extraGuests > 1 ? "s" : ""}`
+              : "You're attending"
+            : "You're not attending"}
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={handleChange}
+        className="text-[9px] underline"
+        style={{ color: colors.muted }}
+      >
+        Change response
+      </button>
     </div>
   )
 }
@@ -422,31 +669,90 @@ type SectionId = (typeof SECTIONS)[number]
 /*  Main component                                                     */
 /* ------------------------------------------------------------------ */
 
+function getEnvelopeOpenedKey(templateId?: string, inviteeSlug?: string): string | null {
+  if (!templateId) return null
+  const slug = inviteeSlug ?? "preview"
+  return `invitation_envelope_opened_${templateId}_${slug}`
+}
+
 export function InvitationPreview({
+  templateId,
   templateName,
   templateThumbnail,
   colors,
   design,
+  envelopeIntro,
   openingStyle,
   animatedEffect,
   language,
   packageType,
   backgroundMusic,
+  backgroundMusicYoutubeUrl,
   guestName,
+  envelopeGuestName,
+  previewGuestName,
+  invitationTitle,
+  hostNames,
+  shortGreeting,
+  eventType,
+  eventDate,
+  includeHijriDate,
+  eventAgenda,
+  venue: venueProp,
+  address: addressProp,
+  googleMapsLink,
+  wazeLink,
+  galleryPhotos,
+  enableWishes = true,
+  featuredWishes = [],
+  eventId,
+  rsvpMode = "open",
+  rsvpDeadline,
+  rsvpMessage,
+  maxGuests,
+  maxGuestsPerInvitee = 0,
+  sealInitials,
+  defaultOpened = false,
+  scrollToSection,
   className,
 }: InvitationPreviewProps) {
-  const [isOpened, setIsOpened] = useState(false)
+  const useEnvelope = Boolean(envelopeIntro)
+  const [isOpened, setIsOpened] = useState(defaultOpened)
   const [activeSection, setActiveSection] = useState<SectionId>("gate")
-  const [rsvpDone, setRsvpDone] = useState(false)
+  const [guestRsvp, setGuestRsvp] = useState<GuestRsvp | null>(null)
+  const [guestWishes, setGuestWishes] = useState<GuestWish[]>([])
   const scrollRef = useRef<HTMLDivElement>(null)
   const sectionRefs = useRef<Partial<Record<SectionId, HTMLDivElement | null>>>({})
 
   useEffect(() => {
-    setIsOpened(false)
-    setActiveSection("gate")
-    setRsvpDone(false)
+    if (!useEnvelope && !defaultOpened) {
+      setIsOpened(false)
+    }
+    setActiveSection(defaultOpened ? "hero" : "gate")
     if (scrollRef.current) scrollRef.current.scrollTop = 0
-  }, [openingStyle])
+  }, [openingStyle, useEnvelope])
+
+  useEffect(() => {
+    if (useEnvelope && typeof window !== "undefined") {
+      const key = getEnvelopeOpenedKey(templateId, "preview")
+      if (key && sessionStorage.getItem(key) === "1") {
+        setIsOpened(true)
+      }
+    }
+  }, [useEnvelope, templateId])
+
+  useEffect(() => {
+    if (scrollToSection && isOpened && sectionRefs.current[scrollToSection]) {
+      sectionRefs.current[scrollToSection]?.scrollIntoView({ behavior: "smooth", block: "start" })
+    }
+  }, [scrollToSection, isOpened])
+
+  useEffect(() => {
+    if (eventId && typeof window !== "undefined") {
+      setGuestWishes(loadGuestWishes(eventId))
+      setGuestRsvp(loadGuestRsvp(eventId, "preview"))
+    }
+  }, [eventId])
 
   const c: TemplateThemeColors = colors || { bg: "#faf8f5", text: "#1c1917", accent: "#a68a6b", muted: "#78716c" }
   const d: TemplateDesign = design || {
@@ -455,14 +761,72 @@ export function InvitationPreview({
     bgPattern: null, borderRadius: "12px", accentShape: "circle",
   }
 
-  const coupleName = "Sarah & Ahmed"
-  const date = "Saturday, March 15, 2026"
-  const time = "6:00 PM - 11:00 PM"
-  const venue = "The Grand Pavilion"
-  const address = "123 Garden Boulevard, Kuala Lumpur"
+  const coupleName = invitationTitle || "Sarah & Ahmed"
+  const gateGuestName = previewGuestName ?? envelopeGuestName ?? "Guest"
+  const gateGuestLine = `Dear ${gateGuestName}`
+  const gateInviteLine = shortGreeting?.trim() ?? ""
+  const date = eventDate?.trim()
+    ? (() => {
+        try {
+          const d = new Date(eventDate)
+          return Number.isNaN(d.getTime()) ? "Saturday, March 15, 2026" : d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" })
+        } catch {
+          return "Saturday, March 15, 2026"
+        }
+      })()
+    : "Saturday, March 15, 2026"
+  const hijriDate = includeHijriDate && eventDate?.trim() ? formatHijriDate(eventDate) : null
 
-  const inviteLabel = language === "arabic" ? "\u0623\u0646\u062A \u0645\u062F\u0639\u0648" : language === "french" ? "Vous \u00EAtes invit\u00E9" : "You are invited"
-  const ceremonyLabel = language === "arabic" ? "\u062D\u0641\u0644 \u0632\u0641\u0627\u0641" : language === "french" ? "C\u00E9r\u00E9monie" : "Wedding Ceremony"
+  function formatTime12h(time: string): string {
+    if (!time?.trim()) return ""
+    const [hStr, mStr] = time.trim().split(":")
+    const h = parseInt(hStr ?? "0", 10)
+    const m = parseInt(mStr ?? "0", 10)
+    if (h === 0 && m === 0) return "12:00 AM"
+    if (h === 12) return `12:${String(m).padStart(2, "0")} PM`
+    if (h > 12) return `${h - 12}:${String(m).padStart(2, "0")} PM`
+    return `${h}:${String(m).padStart(2, "0")} AM`
+  }
+
+  const agendaItems = (eventAgenda ?? []).filter((i) => (i.time?.trim() || i.title?.trim()))
+  const time = agendaItems.length === 0 ? "6:00 PM - 11:00 PM" : undefined
+  const venue = venueProp?.trim() || "The Grand Pavilion"
+  const address = addressProp?.trim() || "123 Garden Boulevard, Kuala Lumpur"
+  const hasGoogleMaps = googleMapsLink?.trim() && /^https?:\/\//.test(googleMapsLink.trim())
+  const hasWaze = wazeLink?.trim() && /^https?:\/\//.test(wazeLink.trim())
+
+  function formatRsvpDeadline(dateStr: string): string {
+    try {
+      const d = new Date(dateStr)
+      if (Number.isNaN(d.getTime())) return dateStr
+      return d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
+    } catch {
+      return dateStr
+    }
+  }
+
+  const handleAddToCalendar = useCallback(() => {
+    const dateStr = eventDate?.trim()
+    if (!dateStr) return
+    const startTime = agendaItems.length > 0 && agendaItems[0].time?.trim()
+      ? agendaItems[0].time.trim()
+      : "18:00"
+    const endTime = agendaItems.length > 0 && agendaItems[agendaItems.length - 1]?.time?.trim()
+      ? agendaItems[agendaItems.length - 1].time!.trim()
+      : "23:00"
+    const ics = generateIcs({
+      title: invitationTitle?.trim() || coupleName,
+      date: dateStr,
+      startTime,
+      endTime,
+      location: venue,
+      address,
+      description: eventType?.trim() || undefined,
+    })
+    downloadIcs(ics, "event.ics")
+  }, [eventDate, agendaItems, invitationTitle, coupleName, venue, address, eventType])
+
+  const inviteLabel = shortGreeting?.trim() ?? ""
 
   const headingClass = d.fontPairing === "serif" ? "font-serif" : "font-sans"
   const headingStyle = { color: c.text, fontWeight: d.headingWeight, letterSpacing: d.letterSpacing }
@@ -471,6 +835,12 @@ export function InvitationPreview({
     setIsOpened(true)
     setActiveSection("hero")
     setTimeout(() => { sectionRefs.current.hero?.scrollIntoView({ behavior: "smooth", block: "start" }) }, 100)
+  }, [])
+
+  const handleCloseToGate = useCallback(() => {
+    setIsOpened(false)
+    setActiveSection("gate")
+    scrollRef.current?.scrollTo({ top: 0, behavior: "instant" })
   }, [])
 
   useEffect(() => {
@@ -502,6 +872,10 @@ export function InvitationPreview({
 
   return (
     <div className={cn("flex flex-col items-center", className)}>
+      <BackgroundMusicPlayer
+        enabled={backgroundMusic}
+        youtubeUrl={backgroundMusicYoutubeUrl}
+      />
       {/* Phone frame */}
       <div className="relative mx-auto w-[280px] rounded-[42px] border-[6px] border-foreground/90 bg-foreground/90 shadow-2xl">
         <div className="absolute top-0 left-1/2 z-40 h-6 w-[100px] -translate-x-1/2 rounded-b-2xl bg-foreground/90" />
@@ -515,23 +889,44 @@ export function InvitationPreview({
             ...(d.bgPattern ? { backgroundImage: d.bgPattern } : {}),
           }}
         >
+          {/* Close / back to gate (only when gate, not envelope) */}
+          {!useEnvelope && isOpened && (
+            <button
+              onClick={handleCloseToGate}
+              className="absolute left-3 top-3 z-50 flex size-8 items-center justify-center rounded-full shadow-md transition-transform hover:scale-110 active:scale-95"
+              style={{ background: c.bg, color: c.text, border: `1px solid ${c.accent}40` }}
+              aria-label="Close invitation"
+            >
+              <ChevronUp className="size-4" />
+            </button>
+          )}
           {/* Template decorator overlay */}
-          {isOpened && <Decorator type={d.decorator} color={c.accent} />}
+          {(isOpened || useEnvelope) && <Decorator type={d.decorator} color={c.accent} />}
 
           {/* Animated effects */}
           {showEffect && animatedEffect === "Floating Dots" && <FloatingDots color={c.accent} />}
           {showEffect && animatedEffect === "Confetti" && <ConfettiEffect />}
 
-          {/* Opening gate */}
-          {!isOpened && openingStyle === "Window" && (
-            <WindowGate onOpen={handleGateOpen} coupleName={coupleName} date={date} colors={c} design={d} />
+          {/* Block renderer: envelope intro + content */}
+          <InvitationRenderer
+            onEnvelopeOpen={handleGateOpen}
+            envelopeIntro={envelopeIntro}
+            templateId={templateId}
+            inviteeSlug="preview"
+            guestName={envelopeGuestName}
+            previewGuestName={previewGuestName ?? (guestName ? "Encik Ahmad & Family" : undefined)}
+            sealInitials={sealInitials}
+          >
+          {/* Opening gate (when no envelope) */}
+          {!useEnvelope && !isOpened && openingStyle === "Window" && (
+            <WindowGate onOpen={handleGateOpen} guestLine={gateGuestLine} inviteLine={gateInviteLine} colors={c} design={d} />
           )}
-          {!isOpened && openingStyle !== "Window" && (
-            <CircleGate onOpen={handleGateOpen} coupleName={coupleName} date={date} colors={c} design={d} />
+          {!useEnvelope && !isOpened && openingStyle !== "Window" && (
+            <CircleGate onOpen={handleGateOpen} guestLine={gateGuestLine} inviteLine={gateInviteLine} colors={c} design={d} />
           )}
 
-          {/* Scrollable sections */}
-          {isOpened && (
+          {/* Scrollable sections - render when opened OR when envelope (so scroll target exists) */}
+          {(isOpened || useEnvelope) && (
             <>
               {/* Hero */}
               <div
@@ -539,9 +934,12 @@ export function InvitationPreview({
                 data-section="hero"
                 className={cn("flex min-h-full w-full flex-col justify-center px-6 py-10", sectionAlign)}
               >
+                <p className="text-[8px] uppercase tracking-[0.35em]" style={{ color: c.muted }}>
+                  {eventType?.trim() || "Wedding Ceremony"}
+                </p>
                 {templateThumbnail && (
                   <div
-                    className="mb-4 size-16 overflow-hidden border-2"
+                    className="mt-4 mb-4 size-16 shrink-0 overflow-hidden border-2"
                     style={{
                       borderColor: c.accent + "40",
                       borderRadius: d.accentShape === "circle" ? "50%" : d.accentShape === "arch" ? "50% 50% 8px 8px" : d.accentShape === "diamond" ? "4px" : "8px",
@@ -558,15 +956,22 @@ export function InvitationPreview({
                   </div>
                 )}
                 <Divider style={d.divider} color={c.accent} />
-                <p className="mt-4 text-[8px] uppercase tracking-[0.3em]" style={{ color: c.muted }}>{inviteLabel}</p>
+                {inviteLabel && <p className="mt-4 text-[8px] uppercase tracking-[0.3em]" style={{ color: c.muted }}>{inviteLabel}</p>}
                 <h2 className={cn("mt-3 text-lg", headingClass)} style={headingStyle}>{coupleName}</h2>
-                <Divider style={d.divider} color={c.accent} />
-                <p className="text-[9px] uppercase tracking-[0.2em]" style={{ color: c.muted }}>{ceremonyLabel}</p>
-                {guestName && (
-                  <div className="mt-4 border px-4 py-1" style={{ borderColor: c.accent + "40", borderRadius: d.borderRadius }}>
-                    <p className="text-[8px] uppercase tracking-[0.12em]" style={{ color: c.muted }}>Dear Guest Name</p>
-                  </div>
+                {hostNames?.trim() && (
+                  <h3
+                    className="mt-3 text-2xl font-normal"
+                    style={{ fontFamily: "var(--font-script), cursive", color: c.text, letterSpacing: "0.02em" }}
+                  >
+                    {hostNames.trim()}
+                  </h3>
                 )}
+                <div className="mt-4 border px-4 py-2" style={{ borderColor: c.accent + "40", borderRadius: d.borderRadius }}>
+                <p className="text-xs font-medium" style={{ color: c.text }}>{date}</p>
+                {hijriDate && (
+                  <p className="mt-1 text-[10px]" style={{ color: c.muted }}>{hijriDate}</p>
+                )}
+                </div>
               </div>
 
               {/* Date & Time */}
@@ -577,10 +982,43 @@ export function InvitationPreview({
                 <h3 className={cn("mt-3 text-[10px] font-semibold uppercase tracking-[0.2em]", headingClass)} style={{ color: c.text }}>Save the Date</h3>
                 <Divider style={d.divider} color={c.accent} />
                 <p className="text-xs font-medium" style={{ color: c.text }}>{date}</p>
-                <div className="mt-2 flex items-center gap-1.5">
-                  <Clock className="size-3" style={{ color: c.muted }} />
-                  <p className="text-[10px]" style={{ color: c.muted }}>{time}</p>
-                </div>
+                {hijriDate && (
+                  <p className="mt-1 text-[10px]" style={{ color: c.muted }}>{hijriDate}</p>
+                )}
+                {agendaItems.length > 0 ? (
+                  <div className="mt-3 flex flex-col gap-2">
+                    {agendaItems.map((item, i) => (
+                      <div key={i} className="flex items-start gap-3 gap-x-4">
+                        {item.time?.trim() && (
+                          <div className="flex shrink-0 items-center gap-1.5">
+                            <Clock className="size-2.5 shrink-0" style={{ color: c.muted }} />
+                            <span className="text-[10px] font-medium tabular-nums" style={{ color: c.text }}>{formatTime12h(item.time)}</span>
+                          </div>
+                        )}
+                        {item.title?.trim() && (
+                          <p className="text-[10px] leading-relaxed flex-1" style={{ color: c.text }}>{item.title.trim()}</p>
+                        )}
+                        {!item.title?.trim() && item.time?.trim() && <span className="flex-1" />}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="mt-2 flex items-center gap-1.5">
+                    <Clock className="size-3" style={{ color: c.muted }} />
+                    <p className="text-[10px]" style={{ color: c.muted }}>{time}</p>
+                  </div>
+                )}
+                {eventDate?.trim() && (
+                  <button
+                    type="button"
+                    onClick={handleAddToCalendar}
+                    className="mt-4 flex w-full items-center justify-center gap-1.5 border px-3 py-2 text-[10px] font-medium transition-colors hover:opacity-90"
+                    style={{ borderColor: c.accent + "40", color: c.text, borderRadius: d.borderRadius }}
+                  >
+                    <CalendarPlus className="size-3.5" style={{ color: c.accent }} />
+                    Add to Calendar
+                  </button>
+                )}
               </div>
 
               {/* Venue */}
@@ -592,14 +1030,32 @@ export function InvitationPreview({
                 <Divider style={d.divider} color={c.accent} />
                 <p className="text-xs font-medium" style={{ color: c.text }}>{venue}</p>
                 <p className="mt-1 max-w-[190px] text-[10px] leading-relaxed" style={{ color: c.muted }}>{address}</p>
-                <div className="mt-4 flex gap-2">
-                  <button className="flex items-center gap-1 border px-2.5 py-1 text-[9px] font-medium transition-colors hover:opacity-80" style={{ borderColor: c.accent + "40", color: c.text, borderRadius: d.borderRadius }}>
-                    <Navigation className="size-2.5" /> Maps
-                  </button>
-                  <button className="flex items-center gap-1 border px-2.5 py-1 text-[9px] font-medium transition-colors hover:opacity-80" style={{ borderColor: c.accent + "40", color: c.text, borderRadius: d.borderRadius }}>
-                    <Navigation className="size-2.5" /> Waze
-                  </button>
-                </div>
+                {(hasGoogleMaps || hasWaze) && (
+                  <div className="mt-4 flex gap-2">
+                    {hasGoogleMaps && (
+                      <a
+                        href={googleMapsLink!.trim()}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 border px-2.5 py-1 text-[9px] font-medium transition-colors hover:opacity-80"
+                        style={{ borderColor: c.accent + "40", color: c.text, borderRadius: d.borderRadius }}
+                      >
+                        <SiGooglemaps className="size-2.5" /> Maps
+                      </a>
+                    )}
+                    {hasWaze && (
+                      <a
+                        href={wazeLink!.trim()}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 border px-2.5 py-1 text-[9px] font-medium transition-colors hover:opacity-80"
+                        style={{ borderColor: c.accent + "40", color: c.text, borderRadius: d.borderRadius }}
+                      >
+                        <SiWaze className="size-2.5" /> Waze
+                      </a>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Gallery */}
@@ -607,54 +1063,88 @@ export function InvitationPreview({
                 <h3 className={cn("text-[10px] font-semibold uppercase tracking-[0.2em]", headingClass)} style={{ color: c.text }}>Gallery</h3>
                 <Divider style={d.divider} color={c.accent} />
                 <div className="grid w-full grid-cols-2 gap-1.5">
-                  {["/templates/elegant-rose.jpg", "/templates/golden-arch.jpg", "/templates/sakura-bloom.jpg", "/templates/rustic-kraft.jpg"].map((src, i) => (
-                    <div
-                      key={i}
-                      className={cn("overflow-hidden", i === 0 && "col-span-2 aspect-[16/10]", i > 0 && "aspect-square")}
-                      style={{ background: c.accent + "15", borderRadius: d.borderRadius }}
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={src} alt={`Photo ${i + 1}`} className="size-full object-cover" />
-                    </div>
-                  ))}
+                  {(galleryPhotos && galleryPhotos.length > 0)
+                    ? galleryPhotos.map((src, i) => (
+                        <div
+                          key={i}
+                          className={cn("overflow-hidden", i === 0 && "col-span-2 aspect-[16/10]", i > 0 && "aspect-square")}
+                          style={{ background: c.accent + "15", borderRadius: d.borderRadius }}
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={src} alt={`Photo ${i + 1}`} className="size-full object-cover" />
+                        </div>
+                      ))
+                    : ["/templates/elegant-rose.svg", "/templates/golden-arch.svg", "/templates/sakura-bloom.svg", "/templates/rustic-kraft.svg"].map((src, i) => (
+                        <div
+                          key={i}
+                          className={cn("overflow-hidden", i === 0 && "col-span-2 aspect-[16/10]", i > 0 && "aspect-square")}
+                          style={{ background: c.accent + "15", borderRadius: d.borderRadius }}
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={src} alt={`Photo ${i + 1}`} className="size-full object-cover" />
+                        </div>
+                      ))}
                 </div>
               </div>
 
               {/* Wishes */}
-              <div ref={registerRef("wishes")} data-section="wishes" className={cn("flex min-h-full w-full flex-col justify-center px-5 py-10", sectionAlign)}>
-                <Heart className="size-4" style={{ color: c.text }} />
-                <h3 className={cn("mt-2 text-[10px] font-semibold uppercase tracking-[0.2em]", headingClass)} style={{ color: c.text }}>Wishes</h3>
-                <Divider style={d.divider} color={c.accent} />
-                <div className="flex w-full flex-col gap-2">
-                  {[
-                    { name: "Aminah", message: "Wishing you both a lifetime of love!" },
-                    { name: "Rizal", message: "Congratulations on your special day!" },
-                    { name: "Fatimah", message: "So happy for you both. Best wishes!" },
-                  ].map((w, i) => (
-                    <div key={i} className="border px-3 py-2" style={{ borderColor: c.accent + "25", background: c.accent + "08", borderRadius: d.borderRadius }}>
-                      <p className="text-[9px] font-semibold" style={{ color: c.text }}>{w.name}</p>
-                      <p className="mt-0.5 text-[9px] leading-relaxed" style={{ color: c.muted }}>{w.message}</p>
-                    </div>
-                  ))}
+              {enableWishes && (
+                <div ref={registerRef("wishes")} data-section="wishes" className={cn("flex min-h-full w-full flex-col justify-center px-5 py-10", sectionAlign)}>
+                  <Heart className="size-4" style={{ color: c.text }} />
+                  <h3 className={cn("mt-2 text-[10px] font-semibold uppercase tracking-[0.2em]", headingClass)} style={{ color: c.text }}>Wishes</h3>
+                  <p className="mt-1 text-[9px]" style={{ color: c.muted }}>Visible to all guests</p>
+                  <Divider style={d.divider} color={c.accent} />
+                  <div className="flex w-full flex-col gap-2">
+                    {[...(featuredWishes?.filter((w) => w.name?.trim() || w.message?.trim()) ?? []), ...guestWishes].map((w, i) => (
+                      <div key={w.id ?? i} className="border px-3 py-2" style={{ borderColor: c.accent + "25", background: c.accent + "08", borderRadius: d.borderRadius }}>
+                        <p className="text-[9px] font-semibold" style={{ color: c.text }}>{w.name?.trim() || "Guest"}</p>
+                        <p className="mt-0.5 text-[9px] leading-relaxed" style={{ color: c.muted }}>{w.message?.trim()}</p>
+                      </div>
+                    ))}
+                  </div>
+                  {eventId && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setGuestWishes(loadGuestWishes(eventId))}
+                        className="mt-3 self-center text-[9px] underline"
+                        style={{ color: c.muted }}
+                      >
+                        Refresh
+                      </button>
+                      <WishesForm
+                        eventId={eventId}
+                        onWishSubmit={(wish) => {
+                          const saved = saveGuestWish(eventId, wish)
+                          setGuestWishes((prev) => [...prev, saved])
+                        }}
+                        colors={c}
+                        design={d}
+                      />
+                    </>
+                  )}
                 </div>
-              </div>
+              )}
 
               {/* RSVP */}
               <div ref={registerRef("rsvp")} data-section="rsvp" className={cn("flex min-h-full w-full flex-col justify-center px-6 py-10", sectionAlign)}>
                 <Send className="size-4" style={{ color: c.text }} />
                 <h3 className={cn("mt-3 text-[10px] font-semibold uppercase tracking-[0.2em]", headingClass)} style={{ color: c.text }}>RSVP</h3>
                 <Divider style={d.divider} color={c.accent} />
-                <p className="max-w-[190px] text-[10px] leading-relaxed" style={{ color: c.muted }}>Please let us know if you can make it!</p>
-                {rsvpDone ? (
-                  <div className="mt-4 border px-4 py-2" style={{ borderColor: c.accent + "30", background: c.accent + "10", borderRadius: d.borderRadius }}>
-                    <p className="text-[10px] font-medium" style={{ color: c.text }}>Thank you!</p>
-                  </div>
-                ) : (
+                <p className="max-w-[190px] text-[10px] leading-relaxed" style={{ color: c.muted }}>
+                  {rsvpMessage?.trim() || "Please let us know if you can make it!"}
+                </p>
+                {rsvpDeadline?.trim() && (
+                  <p className="mt-2 text-[9px]" style={{ color: c.muted }}>
+                    Please respond by {formatRsvpDeadline(rsvpDeadline)}
+                  </p>
+                )}
+                {eventId ? <RsvpSection eventId={eventId} guestRsvp={guestRsvp} onRsvpChange={setGuestRsvp} maxGuestsPerInvitee={maxGuestsPerInvitee} colors={c} design={d} /> : (
                   <div className="mt-4 flex gap-2">
-                    <button onClick={() => setRsvpDone(true)} className="px-3 py-1.5 text-[10px] font-medium transition-colors" style={{ background: c.text, color: c.bg, borderRadius: d.borderRadius }}>
+                    <button className="flex-1 px-3 py-1.5 text-[10px] font-medium opacity-70" style={{ background: c.accent + "30", color: c.text, borderRadius: d.borderRadius }}>
                       Attending
                     </button>
-                    <button onClick={() => setRsvpDone(true)} className="border px-3 py-1.5 text-[10px] font-medium transition-colors" style={{ borderColor: c.accent + "40", color: c.text, borderRadius: d.borderRadius }}>
+                    <button className="flex-1 border px-3 py-1.5 text-[10px] font-medium opacity-70" style={{ borderColor: c.accent + "40", color: c.text, borderRadius: d.borderRadius }}>
                       Not Attending
                     </button>
                   </div>
@@ -664,6 +1154,7 @@ export function InvitationPreview({
               <div className="h-8" />
             </>
           )}
+          </InvitationRenderer>
         </div>
 
         {/* Bottom action bar */}

@@ -34,6 +34,7 @@ export interface SelectedTemplate {
   thumbnail: string
   colors: { bg: string; text: string; accent: string; muted: string }
   design: Template["design"]
+  envelopeIntro?: Template["envelopeIntro"]
 }
 
 interface ChooseDesignModalProps {
@@ -137,7 +138,7 @@ function TemplateCard({
         <img
           src={template.thumbnail}
           alt={template.name}
-          className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
+          className="size-full object-contain transition-transform duration-300 group-hover:scale-105"
         />
         {template.tier === "premium" && (
           <div className="absolute top-2 right-2">
@@ -227,6 +228,7 @@ export function ChooseDesignModal({
       thumbnail: template.thumbnail,
       colors: template.colors,
       design: template.design,
+      envelopeIntro: template.envelopeIntro,
     })
     onOpenChange(false)
   }
@@ -242,7 +244,7 @@ export function ChooseDesignModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex h-[85vh] max-h-[700px] w-[calc(100%-2rem)] max-w-5xl flex-col gap-0 overflow-hidden p-0">
+      <DialogContent className="flex h-[90vh] max-h-[900px] w-[min(95vw,1600px)] max-w-[min(95vw,1600px)] flex-col gap-0 overflow-hidden p-0">
         <div className="shrink-0 border-b border-border px-5 py-4 sm:px-6">
           <DialogHeader>
             <DialogTitle className="text-lg tracking-tight">Choose a Design</DialogTitle>
@@ -335,7 +337,7 @@ export function ChooseDesignModal({
               ) : (
                 <div className="flex flex-col gap-3">
                   <p className="text-xs text-muted-foreground">{filtered.length} template{filtered.length !== 1 ? "s" : ""}</p>
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                     {filtered.map((template) => (
                       <TemplateCard
                         key={template.id}

@@ -8,6 +8,8 @@ interface StudioFooterProps {
   totalSteps: number
   onBack: () => void
   onNext: () => void
+  /** When true, Next button is disabled (e.g. design not selected on Step 1) */
+  nextDisabled?: boolean
 }
 
 export function StudioFooter({
@@ -15,6 +17,7 @@ export function StudioFooter({
   totalSteps,
   onBack,
   onNext,
+  nextDisabled = false,
 }: StudioFooterProps) {
   return (
     <div className="flex flex-col items-center gap-2">
@@ -53,7 +56,7 @@ export function StudioFooter({
         <Button
           size="sm"
           onClick={onNext}
-          disabled={currentStep >= totalSteps}
+          disabled={currentStep >= totalSteps || nextDisabled}
           className="gap-1.5"
         >
           <span>Next</span>

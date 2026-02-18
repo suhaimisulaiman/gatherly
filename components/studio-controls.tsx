@@ -13,6 +13,7 @@ import {
 import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
 
 interface StudioControlsProps {
   language: string
@@ -25,8 +26,8 @@ interface StudioControlsProps {
   setAnimatedEffect: (value: string) => void
   backgroundMusic: boolean
   setBackgroundMusic: (value: boolean) => void
-  guestName: boolean
-  setGuestName: (value: boolean) => void
+  backgroundMusicYoutubeUrl: string
+  setBackgroundMusicYoutubeUrl: (value: string) => void
   templateName: string
   templateThumbnail?: string
   onChooseDesign: () => void
@@ -43,8 +44,8 @@ export function StudioControls({
   setAnimatedEffect,
   backgroundMusic,
   setBackgroundMusic,
-  guestName,
-  setGuestName,
+  backgroundMusicYoutubeUrl,
+  setBackgroundMusicYoutubeUrl,
   templateName,
   templateThumbnail,
   onChooseDesign,
@@ -64,9 +65,9 @@ export function StudioControls({
             <SelectValue placeholder="Select language" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="bahasa-melayu">Bahasa Melayu</SelectItem>
             <SelectItem value="english">English</SelectItem>
             <SelectItem value="arabic">Arabic</SelectItem>
-            <SelectItem value="french">French</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -99,40 +100,6 @@ export function StudioControls({
             </button>
           ))}
         </div>
-      </div>
-
-      {/* Add-ons */}
-      <div className="flex flex-col gap-3">
-        <Label className="text-xs font-medium uppercase tracking-[0.1em] text-muted-foreground">
-          Add-ons
-        </Label>
-        <Card className="border-border bg-card shadow-none">
-          <CardContent className="flex flex-col gap-4 p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex flex-col gap-0.5">
-                <span className="text-sm font-medium text-foreground">Background Music</span>
-                <span className="text-xs text-muted-foreground">Add ambient audio to your card</span>
-              </div>
-              <Switch
-                checked={backgroundMusic}
-                onCheckedChange={setBackgroundMusic}
-                aria-label="Toggle background music"
-              />
-            </div>
-            <div className="h-px bg-border" />
-            <div className="flex items-center justify-between">
-              <div className="flex flex-col gap-0.5">
-                <span className="text-sm font-medium text-foreground">Guest Name</span>
-                <span className="text-xs text-muted-foreground">Personalize each invitation</span>
-              </div>
-              <Switch
-                checked={guestName}
-                onCheckedChange={setGuestName}
-                aria-label="Toggle guest name"
-              />
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Design Selection */}
@@ -174,6 +141,45 @@ export function StudioControls({
             <span className="text-xs text-muted-foreground">Browse</span>
           </Button>
         )}
+      </div>
+
+      {/* Add-ons */}
+      <div className="flex flex-col gap-3">
+        <Label className="text-xs font-medium uppercase tracking-[0.1em] text-muted-foreground">
+          Add-ons
+        </Label>
+        <Card className="border-border bg-card shadow-none">
+          <CardContent className="flex flex-col gap-4 p-4">
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-sm font-medium text-foreground">Background Music</span>
+                  <span className="text-xs text-muted-foreground">Add ambient audio from a YouTube video</span>
+                </div>
+                <Switch
+                  checked={backgroundMusic}
+                  onCheckedChange={setBackgroundMusic}
+                  aria-label="Toggle background music"
+                />
+              </div>
+              {backgroundMusic && (
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="youtube-url" className="text-xs text-muted-foreground">
+                    YouTube video link
+                  </Label>
+                  <Input
+                    id="youtube-url"
+                    type="url"
+                    placeholder="https://youtube.com/watch?v=..."
+                    value={backgroundMusicYoutubeUrl}
+                    onChange={(e) => setBackgroundMusicYoutubeUrl(e.target.value)}
+                    className="h-9 text-sm"
+                  />
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Opening Style */}
