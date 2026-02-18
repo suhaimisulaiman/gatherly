@@ -1,0 +1,7 @@
+# Minimal config for Supabase CLI (migrations, db push).
+# Full config: run `supabase init` and customize.
+
+project_id = "gatherly"
+
+[db]
+major_version = 15

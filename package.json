@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "prebuild": "node scripts/run-migrate-if-env.js",
+    "db:push": "supabase link --project-ref $SUPABASE_PROJECT_REF && supabase db push --yes"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -64,6 +66,7 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "supabase": "^2.15.0",
     "@tailwindcss/postcss": "^4.1.13",
     "@types/node": "^22",
     "@types/react": "19.2.14",
