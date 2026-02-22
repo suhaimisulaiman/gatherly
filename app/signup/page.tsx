@@ -37,7 +37,7 @@ export default function SignUpPage() {
       <Card className="w-full max-w-sm">
         <CardHeader className="space-y-1 text-center">
           <CardTitle className="text-2xl">Create an account</CardTitle>
-          <CardDescription>Use email/password or continue with a provider.</CardDescription>
+          <CardDescription>Use email/password or continue with Google.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
           <SocialSignIn mode="signup" />

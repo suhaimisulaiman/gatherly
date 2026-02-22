@@ -4,38 +4,26 @@ import { useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 
-const providers = [
-  { id: "google" as const, label: "Google", icon: "G" },
-  { id: "facebook" as const, label: "Facebook", icon: "f" },
-  { id: "apple" as const, label: "Apple", icon: "" },
-]
-
-type ProviderId = "google" | "facebook" | "apple"
-
-export function SocialSignIn({ mode }: { mode: "login" | "signup" }) {
-
-  const handleSocialSignIn = useCallback(async (provider: ProviderId) => {
+export function SocialSignIn({ mode, next }: { mode: "login" | "signup"; next?: string }) {
+  const handleSocialSignIn = useCallback(async () => {
     const supabase = createClient()
-    const redirectTo = typeof window !== "undefined" ? `${window.location.origin}/auth/callback` : "/auth/callback"
+    let path = "/auth/callback"
+    if (next) path += `?next=${encodeURIComponent(next)}`
+    const redirectTo = typeof window !== "undefined" ? `${window.location.origin}${path}` : path
     await supabase.auth.signInWithOAuth({
-      provider,
+      provider: "google",
       options: { redirectTo },
     })
-  }, [])
+  }, [next])
 
   return (
-    <div className="grid gap-2">
-      {providers.map((p) => (
-        <Button
-          key={p.id}
-          type="button"
-          variant="outline"
-          className="w-full"
-          onClick={() => handleSocialSignIn(p.id)}
-        >
-          {p.label}
-        </Button>
-      ))}
-    </div>
+    <Button
+      type="button"
+      variant="outline"
+      className="w-full"
+      onClick={() => handleSocialSignIn()}
+    >
+      Continue with Google
+    </Button>
   )
 }
