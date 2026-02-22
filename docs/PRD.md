@@ -114,6 +114,7 @@ Gatherly is a digital invitation platform that enables users to create, manage, 
 | Graphics assets | P0 | Upload templates, fonts, default images |
 | Default settings | P1 | Default audio, labels, UI copy |
 | **Sponsored ads** | P0 | Create ad campaigns, manage sponsors, set placements & targeting |
+| **Voucher management** | P0 | Create/edit vouchers, set discount (% or fixed), usage limits, expiry; apply at checkout |
 | Content moderation | P1 | Flagged invitations, wishes |
 | System settings | P1 | Feature flags, maintenance mode |
 | Audit logs | P1 | Admin actions for compliance |
@@ -325,7 +326,7 @@ Vendors (venues, caterers, photographers, florists, etc.) can pay to display spo
 | 2–3 | Stripe integration: one-time checkout, webhooks |
 | 3–4 | Payment flow: pay at publish, receipt, order history |
 | 4–5 | Feature gating (preview free, full features after payment) |
-| 5–6 | Promo codes, bulk discounts (e.g. 3 invites) |
+| 5–6 | Vouchers & promo codes (create in admin, apply at checkout; % or fixed discount; bulk discounts e.g. 3 invites) |
 
 **Key outcomes:** Public site live, users pay per invitation at publish.
 
@@ -339,6 +340,7 @@ Vendors (venues, caterers, photographers, florists, etc.) can pay to display spo
 | 2–3 | User management (list, search, block) |
 | 3–4 | Order/payment management |
 | 4–5 | Package management (create, edit, feature toggles) |
+| 5–5 | Voucher management (create, edit, set discount, usage limits, expiry) |
 | 5–6 | Template/asset management |
 | 6–7 | Default settings (audio, labels) |
 | 7–8 | Sponsored ads (sponsors, campaigns, placements, targeting), audit logs, moderation |

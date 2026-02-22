@@ -1,7 +1,6 @@
 "use client"
 
 import { Palette, Sparkles, Check } from "lucide-react"
-import { Card, CardContent } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import {
   Select,
@@ -10,16 +9,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 
+import type { CardLanguage, Package } from "@/lib/invitationApi"
+
 interface StudioControlsProps {
   language: string
   setLanguage: (value: string) => void
+  /** Card language options from backend. Falls back to default if empty. */
+  cardLanguages?: CardLanguage[]
   packageType: string
   setPackageType: (value: string) => void
+  /** Package options from backend. Falls back to default if empty. */
+  packages?: Package[]
   openingStyle: string
   setOpeningStyle: (value: string) => void
   animatedEffect: string
@@ -36,8 +40,18 @@ interface StudioControlsProps {
 export function StudioControls({
   language,
   setLanguage,
+  cardLanguages = [
+    { value: "bahasa-melayu", label: "Bahasa Melayu" },
+    { value: "english", label: "English" },
+    { value: "arabic", label: "Arabic" },
+  ],
   packageType,
   setPackageType,
+  packages = [
+    { value: "standard", label: "Standard" },
+    { value: "premium", label: "Premium" },
+    { value: "gold", label: "Gold", isPopular: true },
+  ],
   openingStyle,
   setOpeningStyle,
   animatedEffect,
@@ -65,9 +79,11 @@ export function StudioControls({
             <SelectValue placeholder="Select language" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="bahasa-melayu">Bahasa Melayu</SelectItem>
-            <SelectItem value="english">English</SelectItem>
-            <SelectItem value="arabic">Arabic</SelectItem>
+            {cardLanguages.map((lang) => (
+              <SelectItem key={lang.value} value={lang.value}>
+                {lang.label}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
@@ -78,18 +94,18 @@ export function StudioControls({
           Package
         </Label>
         <div className="grid grid-cols-3 gap-2">
-          {(["standard", "premium", "gold"] as const).map((pkg) => (
+          {packages.map((pkg) => (
             <button
-              key={pkg}
-              onClick={() => setPackageType(pkg)}
+              key={pkg.value}
+              onClick={() => setPackageType(pkg.value)}
               className={`relative flex cursor-pointer flex-col items-center gap-1 rounded-lg border px-3 py-3 text-xs transition-all ${
-                packageType === pkg
+                packageType === pkg.value
                   ? "border-foreground bg-foreground text-primary-foreground"
                   : "border-border bg-card text-foreground hover:border-foreground/30"
               }`}
             >
-              <span className="font-medium capitalize">{pkg}</span>
-              {pkg === "gold" && (
+              <span className="font-medium capitalize">{pkg.label}</span>
+              {pkg.isPopular && (
                 <Badge
                   variant="secondary"
                   className="absolute -top-2 -right-2 px-1.5 py-0 text-[9px]"
@@ -143,43 +159,23 @@ export function StudioControls({
         )}
       </div>
 
-      {/* Add-ons */}
-      <div className="flex flex-col gap-3">
-        <Label className="text-xs font-medium uppercase tracking-[0.1em] text-muted-foreground">
-          Add-ons
+      {/* Music */}
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="music-url" className="text-xs font-medium uppercase tracking-[0.1em] text-muted-foreground">
+          Music
         </Label>
-        <Card className="border-border bg-card shadow-none">
-          <CardContent className="flex flex-col gap-4 p-4">
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center justify-between">
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-sm font-medium text-foreground">Background Music</span>
-                  <span className="text-xs text-muted-foreground">Add ambient audio from a YouTube video</span>
-                </div>
-                <Switch
-                  checked={backgroundMusic}
-                  onCheckedChange={setBackgroundMusic}
-                  aria-label="Toggle background music"
-                />
-              </div>
-              {backgroundMusic && (
-                <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="youtube-url" className="text-xs text-muted-foreground">
-                    YouTube video link
-                  </Label>
-                  <Input
-                    id="youtube-url"
-                    type="url"
-                    placeholder="https://youtube.com/watch?v=..."
-                    value={backgroundMusicYoutubeUrl}
-                    onChange={(e) => setBackgroundMusicYoutubeUrl(e.target.value)}
-                    className="h-9 text-sm"
-                  />
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        <Input
+          id="music-url"
+          type="url"
+          placeholder="YouTube video link (optional)"
+          value={backgroundMusicYoutubeUrl}
+          onChange={(e) => {
+            const val = e.target.value
+            setBackgroundMusicYoutubeUrl(val)
+            setBackgroundMusic(!!val.trim())
+          }}
+          className="h-9 text-sm"
+        />
       </div>
 
       {/* Opening Style */}

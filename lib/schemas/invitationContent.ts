@@ -44,6 +44,14 @@ export const invitationContentSchema = z.object({
   maxGuests: z.number().int().min(0).optional(),
   /** Max extra guests each invitee can bring (0 = no extras) */
   maxGuestsPerInvitee: z.number().int().min(0).optional().default(0),
+  /** Card language for labels (e.g. english, bahasa-melayu) - from Step 1 */
+  language: z.string().optional().default("english"),
+  /** Step 1 options - package, opening style, effects, music */
+  packageType: z.string().optional().default("gold"),
+  openingStyle: z.string().optional().default("Circle Gate"),
+  animatedEffect: z.string().optional().default("none"),
+  backgroundMusic: z.boolean().optional().default(false),
+  backgroundMusicYoutubeUrl: z.string().optional().default(""),
 })
 
 export type InvitationContent = z.infer<typeof invitationContentSchema>
@@ -68,4 +76,10 @@ export const defaultInvitationContent: InvitationContent = {
   rsvpMessage: "",
   maxGuests: undefined,
   maxGuestsPerInvitee: 0,
+  language: "english",
+  packageType: "gold",
+  openingStyle: "Circle Gate",
+  animatedEffect: "none",
+  backgroundMusic: false,
+  backgroundMusicYoutubeUrl: "",
 }

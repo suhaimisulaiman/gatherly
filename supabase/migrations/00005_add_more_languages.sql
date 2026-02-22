@@ -1,0 +1,106 @@
+-- Add Mandarin, Cantonese, Hokkien, Tamil to card_languages and label_translations
+UPDATE public.app_config
+SET value = value || '[
+  {"value": "mandarin", "label": "Mandarin"},
+  {"value": "cantonese", "label": "Cantonese"},
+  {"value": "hokkien", "label": "Hokkien"},
+  {"value": "tamil", "label": "Tamil"}
+]'::jsonb
+WHERE key = 'card_languages';
+
+UPDATE public.app_config
+SET value = value || '{
+  "mandarin": {
+    "dearPrefix": "尊敬的",
+    "to": "致：",
+    "dearGuest": "尊敬的贵宾",
+    "tapSealToOpen": "轻触印章以打开",
+    "saveTheDate": "敬请保存日期",
+    "venue": "地点",
+    "gallery": "相册",
+    "wishes": "祝福",
+    "visibleToAllGuests": "所有宾客可见",
+    "rsvp": "回复",
+    "rsvpDefaultMessage": "请告知我们您能否出席！",
+    "pleaseRespondBy": "请于以下日期前回复",
+    "attending": "将出席",
+    "notAttending": "无法出席",
+    "addToCalendar": "添加到日历",
+    "refresh": "刷新",
+    "call": "致电",
+    "music": "音乐",
+    "map": "地图",
+    "maps": "地图",
+    "waze": "Waze"
+  },
+  "cantonese": {
+    "dearPrefix": "尊敬的",
+    "to": "致：",
+    "dearGuest": "尊敬的貴賓",
+    "tapSealToOpen": "輕觸印章以打開",
+    "saveTheDate": "敬請保存日期",
+    "venue": "地點",
+    "gallery": "相冊",
+    "wishes": "祝福",
+    "visibleToAllGuests": "所有賓客可見",
+    "rsvp": "回覆",
+    "rsvpDefaultMessage": "請告知我們您能否出席！",
+    "pleaseRespondBy": "請於以下日期前回覆",
+    "attending": "將出席",
+    "notAttending": "無法出席",
+    "addToCalendar": "添加到日曆",
+    "refresh": "刷新",
+    "call": "致電",
+    "music": "音樂",
+    "map": "地圖",
+    "maps": "地圖",
+    "waze": "Waze"
+  },
+  "hokkien": {
+    "dearPrefix": "尊敬的",
+    "to": "致：",
+    "dearGuest": "尊敬的貴賓",
+    "tapSealToOpen": "點擊印章來開",
+    "saveTheDate": "請記下日期",
+    "venue": "地點",
+    "gallery": "相冊",
+    "wishes": "祝福",
+    "visibleToAllGuests": "所有賓客都會看到",
+    "rsvp": "回覆",
+    "rsvpDefaultMessage": "請告訴我們您能不能來！",
+    "pleaseRespondBy": "請在以下日期前回覆",
+    "attending": "會出席",
+    "notAttending": "無法出席",
+    "addToCalendar": "加入日曆",
+    "refresh": "刷新",
+    "call": "打電話",
+    "music": "音樂",
+    "map": "地圖",
+    "maps": "地圖",
+    "waze": "Waze"
+  },
+  "tamil": {
+    "dearPrefix": "அன்புடைய",
+    "to": "செலுத்து:",
+    "dearGuest": "அன்புடைய விருந்தினர்",
+    "tapSealToOpen": "திறக்க முத்திரையை தட்டுங்கள்",
+    "saveTheDate": "தேதியை சேமிக்கவும்",
+    "venue": "இடம்",
+    "gallery": "புகைப்பட காட்சியகம்",
+    "wishes": "நல்வாழ்த்துகள்",
+    "visibleToAllGuests": "அனைத்து விருந்தினர்களுக்கும் தெரியும்",
+    "rsvp": "பதில்",
+    "rsvpDefaultMessage": "நீங்கள் வர முடியுமா என்பதை எங்களுக்கு தெரியப்படுத்தவும்!",
+    "pleaseRespondBy": "தயவுசெய்து பின்வரும் தேதிக்குள் பதிலளிக்கவும்",
+    "attending": "வருகிறேன்",
+    "notAttending": "வர முடியவில்லை",
+    "addToCalendar": "காலண்டரில் சேர்",
+    "refresh": "புதுப்பிக்கவும்",
+    "call": "அழைக்கவும்",
+    "music": "இசை",
+    "map": "வரைபடம்",
+    "maps": "வரைபடங்கள்",
+    "waze": "Waze"
+  }
+}'::jsonb
+WHERE key = 'label_translations';

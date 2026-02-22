@@ -39,6 +39,8 @@ export interface InvitationPreviewProps {
   openingStyle: string
   animatedEffect: string
   language: string
+  /** Translated labels per language (from config). Keys: dearPrefix, venue, gallery, etc. */
+  labels?: Record<string, string>
   packageType: string
   backgroundMusic: boolean
   /** YouTube video URL for background music (when backgroundMusic is true) */
@@ -685,6 +687,7 @@ export function InvitationPreview({
   openingStyle,
   animatedEffect,
   language,
+  labels,
   packageType,
   backgroundMusic,
   backgroundMusicYoutubeUrl,
@@ -754,6 +757,7 @@ export function InvitationPreview({
     }
   }, [eventId])
 
+  const t = (key: string, fallback: string) => (labels?.[key] ?? fallback)
   const c: TemplateThemeColors = colors || { bg: "#faf8f5", text: "#1c1917", accent: "#a68a6b", muted: "#78716c" }
   const d: TemplateDesign = design || {
     fontPairing: "serif", headingWeight: "400", letterSpacing: "0.04em",
@@ -763,7 +767,7 @@ export function InvitationPreview({
 
   const coupleName = invitationTitle || "Sarah & Ahmed"
   const gateGuestName = previewGuestName ?? envelopeGuestName ?? "Guest"
-  const gateGuestLine = `Dear ${gateGuestName}`
+  const gateGuestLine = `${t("dearPrefix", "Dear")} ${gateGuestName}`
   const gateInviteLine = shortGreeting?.trim() ?? ""
   const date = eventDate?.trim()
     ? (() => {
@@ -916,6 +920,7 @@ export function InvitationPreview({
             guestName={envelopeGuestName}
             previewGuestName={previewGuestName ?? (guestName ? "Encik Ahmad & Family" : undefined)}
             sealInitials={sealInitials}
+            labels={labels}
           >
           {/* Opening gate (when no envelope) */}
           {!useEnvelope && !isOpened && openingStyle === "Window" && (
@@ -979,7 +984,7 @@ export function InvitationPreview({
                 <AccentIcon shape={d.accentShape} color={c.accent}>
                   <Calendar className="size-5" style={{ color: c.text }} />
                 </AccentIcon>
-                <h3 className={cn("mt-3 text-[10px] font-semibold uppercase tracking-[0.2em]", headingClass)} style={{ color: c.text }}>Save the Date</h3>
+                <h3 className={cn("mt-3 text-[10px] font-semibold uppercase tracking-[0.2em]", headingClass)} style={{ color: c.text }}>{t("saveTheDate", "Save the Date")}</h3>
                 <Divider style={d.divider} color={c.accent} />
                 <p className="text-xs font-medium" style={{ color: c.text }}>{date}</p>
                 {hijriDate && (
@@ -1016,7 +1021,7 @@ export function InvitationPreview({
                     style={{ borderColor: c.accent + "40", color: c.text, borderRadius: d.borderRadius }}
                   >
                     <CalendarPlus className="size-3.5" style={{ color: c.accent }} />
-                    Add to Calendar
+                    {t("addToCalendar", "Add to Calendar")}
                   </button>
                 )}
               </div>
@@ -1026,7 +1031,7 @@ export function InvitationPreview({
                 <AccentIcon shape={d.accentShape} color={c.accent}>
                   <MapPin className="size-5" style={{ color: c.text }} />
                 </AccentIcon>
-                <h3 className={cn("mt-3 text-[10px] font-semibold uppercase tracking-[0.2em]", headingClass)} style={{ color: c.text }}>Venue</h3>
+                <h3 className={cn("mt-3 text-[10px] font-semibold uppercase tracking-[0.2em]", headingClass)} style={{ color: c.text }}>{t("venue", "Venue")}</h3>
                 <Divider style={d.divider} color={c.accent} />
                 <p className="text-xs font-medium" style={{ color: c.text }}>{venue}</p>
                 <p className="mt-1 max-w-[190px] text-[10px] leading-relaxed" style={{ color: c.muted }}>{address}</p>
@@ -1040,7 +1045,7 @@ export function InvitationPreview({
                         className="flex items-center gap-1 border px-2.5 py-1 text-[9px] font-medium transition-colors hover:opacity-80"
                         style={{ borderColor: c.accent + "40", color: c.text, borderRadius: d.borderRadius }}
                       >
-                        <SiGooglemaps className="size-2.5" /> Maps
+                        <SiGooglemaps className="size-2.5" /> {t("maps", "Maps")}
                       </a>
                     )}
                     {hasWaze && (
@@ -1051,7 +1056,7 @@ export function InvitationPreview({
                         className="flex items-center gap-1 border px-2.5 py-1 text-[9px] font-medium transition-colors hover:opacity-80"
                         style={{ borderColor: c.accent + "40", color: c.text, borderRadius: d.borderRadius }}
                       >
-                        <SiWaze className="size-2.5" /> Waze
+                        <SiWaze className="size-2.5" /> {t("waze", "Waze")}
                       </a>
                     )}
                   </div>
@@ -1060,7 +1065,7 @@ export function InvitationPreview({
 
               {/* Gallery */}
               <div ref={registerRef("gallery")} data-section="gallery" className={cn("flex min-h-full w-full flex-col justify-center px-5 py-10", sectionAlign)}>
-                <h3 className={cn("text-[10px] font-semibold uppercase tracking-[0.2em]", headingClass)} style={{ color: c.text }}>Gallery</h3>
+                <h3 className={cn("text-[10px] font-semibold uppercase tracking-[0.2em]", headingClass)} style={{ color: c.text }}>{t("gallery", "Gallery")}</h3>
                 <Divider style={d.divider} color={c.accent} />
                 <div className="grid w-full grid-cols-2 gap-1.5">
                   {(galleryPhotos && galleryPhotos.length > 0)
@@ -1091,8 +1096,8 @@ export function InvitationPreview({
               {enableWishes && (
                 <div ref={registerRef("wishes")} data-section="wishes" className={cn("flex min-h-full w-full flex-col justify-center px-5 py-10", sectionAlign)}>
                   <Heart className="size-4" style={{ color: c.text }} />
-                  <h3 className={cn("mt-2 text-[10px] font-semibold uppercase tracking-[0.2em]", headingClass)} style={{ color: c.text }}>Wishes</h3>
-                  <p className="mt-1 text-[9px]" style={{ color: c.muted }}>Visible to all guests</p>
+                  <h3 className={cn("mt-2 text-[10px] font-semibold uppercase tracking-[0.2em]", headingClass)} style={{ color: c.text }}>{t("wishes", "Wishes")}</h3>
+                  <p className="mt-1 text-[9px]" style={{ color: c.muted }}>{t("visibleToAllGuests", "Visible to all guests")}</p>
                   <Divider style={d.divider} color={c.accent} />
                   <div className="flex w-full flex-col gap-2">
                     {[...(featuredWishes?.filter((w) => w.name?.trim() || w.message?.trim()) ?? []), ...guestWishes].map((w, i) => (
@@ -1110,7 +1115,7 @@ export function InvitationPreview({
                         className="mt-3 self-center text-[9px] underline"
                         style={{ color: c.muted }}
                       >
-                        Refresh
+                        {t("refresh", "Refresh")}
                       </button>
                       <WishesForm
                         eventId={eventId}
@@ -1129,23 +1134,23 @@ export function InvitationPreview({
               {/* RSVP */}
               <div ref={registerRef("rsvp")} data-section="rsvp" className={cn("flex min-h-full w-full flex-col justify-center px-6 py-10", sectionAlign)}>
                 <Send className="size-4" style={{ color: c.text }} />
-                <h3 className={cn("mt-3 text-[10px] font-semibold uppercase tracking-[0.2em]", headingClass)} style={{ color: c.text }}>RSVP</h3>
+                <h3 className={cn("mt-3 text-[10px] font-semibold uppercase tracking-[0.2em]", headingClass)} style={{ color: c.text }}>{t("rsvp", "RSVP")}</h3>
                 <Divider style={d.divider} color={c.accent} />
                 <p className="max-w-[190px] text-[10px] leading-relaxed" style={{ color: c.muted }}>
-                  {rsvpMessage?.trim() || "Please let us know if you can make it!"}
+                  {rsvpMessage?.trim() || t("rsvpDefaultMessage", "Please let us know if you can make it!")}
                 </p>
                 {rsvpDeadline?.trim() && (
                   <p className="mt-2 text-[9px]" style={{ color: c.muted }}>
-                    Please respond by {formatRsvpDeadline(rsvpDeadline)}
+                    {t("pleaseRespondBy", "Please respond by")} {formatRsvpDeadline(rsvpDeadline)}
                   </p>
                 )}
                 {eventId ? <RsvpSection eventId={eventId} guestRsvp={guestRsvp} onRsvpChange={setGuestRsvp} maxGuestsPerInvitee={maxGuestsPerInvitee} colors={c} design={d} /> : (
                   <div className="mt-4 flex gap-2">
                     <button className="flex-1 px-3 py-1.5 text-[10px] font-medium opacity-70" style={{ background: c.accent + "30", color: c.text, borderRadius: d.borderRadius }}>
-                      Attending
+                      {t("attending", "Attending")}
                     </button>
                     <button className="flex-1 border px-3 py-1.5 text-[10px] font-medium opacity-70" style={{ borderColor: c.accent + "40", color: c.text, borderRadius: d.borderRadius }}>
-                      Not Attending
+                      {t("notAttending", "Not Attending")}
                     </button>
                   </div>
                 )}
@@ -1162,10 +1167,10 @@ export function InvitationPreview({
           <div className="absolute bottom-3 left-1/2 z-30 -translate-x-1/2">
             <div className="flex items-center gap-0.5 rounded-full border border-border/50 px-1.5 py-1 shadow-lg backdrop-blur-sm" style={{ background: c.bg + "f0" }}>
               {[
-                { icon: <Phone className="size-2.5" style={{ color: c.text }} />, label: "Call" },
-                { icon: <Music className="size-2.5" style={{ color: c.text }} />, label: "Music" },
-                { icon: <MapPin className="size-2.5" style={{ color: c.text }} />, label: "Map" },
-                { icon: <Send className="size-2.5" style={{ color: c.text }} />, label: "RSVP" },
+                { icon: <Phone className="size-2.5" style={{ color: c.text }} />, label: t("call", "Call") },
+                { icon: <Music className="size-2.5" style={{ color: c.text }} />, label: t("music", "Music") },
+                { icon: <MapPin className="size-2.5" style={{ color: c.text }} />, label: t("map", "Map") },
+                { icon: <Send className="size-2.5" style={{ color: c.text }} />, label: t("rsvp", "RSVP") },
               ].map((a) => (
                 <button key={a.label} className="flex flex-col items-center gap-0.5 rounded-full px-2 py-1 transition-colors" style={{ color: c.muted }}>
                   {a.icon}

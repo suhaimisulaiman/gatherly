@@ -16,6 +16,8 @@ export interface InvitationRendererProps {
   previewGuestName?: string
   /** Override wax seal initials (from Step 2 content) */
   sealInitials?: string
+  /** Translated labels (to, dearGuest, tapSealToOpen) */
+  labels?: Record<string, string>
   children: React.ReactNode
 }
 
@@ -27,6 +29,7 @@ export function InvitationRenderer({
   guestName,
   previewGuestName,
   sealInitials: sealInitialsOverride,
+  labels,
   children,
 }: InvitationRendererProps) {
   const useEnvelope = Boolean(envelopeIntro)
@@ -42,6 +45,7 @@ export function InvitationRenderer({
           invitationId={templateId}
           inviteeSlug={inviteeSlug}
           previewGuestName={previewGuestName}
+          labels={labels}
         />
       )}
       {children}

@@ -5,6 +5,8 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import type { User } from "@supabase/supabase-js"
+
+type MeResponse = { email?: string; isAdmin?: boolean }
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -16,6 +18,7 @@ import {
 export function UserMenu() {
   const router = useRouter()
   const [user, setUser] = useState<User | null>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -26,9 +29,18 @@ export function UserMenu() {
     })
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
+      setIsAdmin(false)
     })
     return () => subscription.unsubscribe()
   }, [])
+
+  useEffect(() => {
+    if (!user) return
+    fetch("/api/v1/me", { credentials: "include" })
+      .then((r) => r.json())
+      .then((d: MeResponse) => setIsAdmin(!!d.isAdmin))
+      .catch(() => {})
+  }, [user?.id])
 
   async function handleSignOut() {
     const supabase = createClient()
@@ -61,8 +73,13 @@ export function UserMenu() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
         <DropdownMenuItem asChild>
-          <Link href="/">Dashboard</Link>
+          <Link href="/dashboard">Dashboard</Link>
         </DropdownMenuItem>
+        {isAdmin && (
+          <DropdownMenuItem asChild>
+            <Link href="/admin/config">Admin</Link>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
           Sign out
         </DropdownMenuItem>

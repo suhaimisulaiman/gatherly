@@ -1,0 +1,17 @@
+import { NextResponse } from "next/server"
+import { getCurrentUser } from "@/lib/auth"
+import { isAdmin } from "@/lib/admin"
+
+/**
+ * GET /api/v1/me — Current user info (auth required).
+ */
+export async function GET() {
+  const user = await getCurrentUser()
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+  return NextResponse.json({
+    email: user.email,
+    isAdmin: isAdmin(user),
+  })
+}

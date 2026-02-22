@@ -1,6 +1,6 @@
 "use client"
 
-import { ArrowLeft, ArrowRight } from "lucide-react"
+import { ArrowLeft, ArrowRight, Send } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 interface StudioFooterProps {
@@ -8,8 +8,12 @@ interface StudioFooterProps {
   totalSteps: number
   onBack: () => void
   onNext: () => void
+  /** Called when user clicks Publish on the final step */
+  onPublish?: () => void
   /** When true, Next button is disabled (e.g. design not selected on Step 1) */
   nextDisabled?: boolean
+  /** When true, Publish button shows loading state */
+  publishLoading?: boolean
 }
 
 export function StudioFooter({
@@ -17,8 +21,11 @@ export function StudioFooter({
   totalSteps,
   onBack,
   onNext,
+  onPublish,
   nextDisabled = false,
+  publishLoading = false,
 }: StudioFooterProps) {
+  const isLastStep = currentStep >= totalSteps
   return (
     <div className="flex flex-col items-center gap-2">
       <div className="flex w-full items-center justify-between">
@@ -53,15 +60,33 @@ export function StudioFooter({
           </span>
         </div>
 
-        <Button
-          size="sm"
-          onClick={onNext}
-          disabled={currentStep >= totalSteps || nextDisabled}
-          className="gap-1.5"
-        >
-          <span>Next</span>
-          <ArrowRight className="size-3.5" />
-        </Button>
+        {isLastStep && onPublish ? (
+          <Button
+            size="sm"
+            onClick={onPublish}
+            disabled={publishLoading || nextDisabled}
+            className="gap-1.5"
+          >
+            {publishLoading ? (
+              <span>Saving…</span>
+            ) : (
+              <>
+                <span>Publish</span>
+                <Send className="size-3.5" />
+              </>
+            )}
+          </Button>
+        ) : (
+          <Button
+            size="sm"
+            onClick={onNext}
+            disabled={currentStep >= totalSteps || nextDisabled}
+            className="gap-1.5"
+          >
+            <span>Next</span>
+            <ArrowRight className="size-3.5" />
+          </Button>
+        )}
       </div>
 
       <p className="text-[11px] tracking-wide text-muted-foreground/70">

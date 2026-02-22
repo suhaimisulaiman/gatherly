@@ -14,7 +14,7 @@ function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const errorParam = searchParams.get("error")
-  const nextParam = searchParams.get("next") ?? "/"
+  const nextParam = searchParams.get("next") ?? "/dashboard"
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)

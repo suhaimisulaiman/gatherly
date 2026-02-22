@@ -15,14 +15,13 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import {
-  TEMPLATES,
   EVENT_THEMES,
   STYLE_TAGS,
-  type Template,
   type EventTheme,
   type StyleTag,
   type Tier,
 } from "@/lib/templates"
+import type { ApiTemplate } from "@/lib/invitationApi"
 
 /* ------------------------------------------------------------------ */
 /*  Props                                                              */
@@ -33,11 +32,13 @@ export interface SelectedTemplate {
   name: string
   thumbnail: string
   colors: { bg: string; text: string; accent: string; muted: string }
-  design: Template["design"]
-  envelopeIntro?: Template["envelopeIntro"]
+  design: ApiTemplate["design"]
+  envelopeIntro?: ApiTemplate["envelopeIntro"]
+  defaultAudioUrl?: string | null
 }
 
 interface ChooseDesignModalProps {
+  templates: ApiTemplate[]
   open: boolean
   onOpenChange: (open: boolean) => void
   onSelectTemplate: (template: SelectedTemplate) => void
@@ -80,7 +81,7 @@ function MiniPhonePreview({
   template,
   onClose,
 }: {
-  template: Template
+  template: ApiTemplate
   onClose: () => void
 }) {
   return (
@@ -119,7 +120,7 @@ function TemplateCard({
   onSelect,
   onPreview,
 }: {
-  template: Template
+  template: ApiTemplate
   isSelected: boolean
   onSelect: () => void
   onPreview: () => void
@@ -196,6 +197,7 @@ function TemplateCard({
 /* ------------------------------------------------------------------ */
 
 export function ChooseDesignModal({
+  templates,
   open,
   onOpenChange,
   onSelectTemplate,
@@ -205,10 +207,10 @@ export function ChooseDesignModal({
   const [selectedTheme, setSelectedTheme] = useState<EventTheme | null>(null)
   const [selectedStyle, setSelectedStyle] = useState<StyleTag | null>(null)
   const [tierFilter, setTierFilter] = useState<Tier | "all">("all")
-  const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null)
+  const [previewTemplate, setPreviewTemplate] = useState<ApiTemplate | null>(null)
 
   const filtered = useMemo(() => {
-    return TEMPLATES.filter((t) => {
+    return templates.filter((t) => {
       if (selectedTheme && !t.themes.includes(selectedTheme)) return false
       if (selectedStyle && !t.styles.includes(selectedStyle)) return false
       if (tierFilter !== "all" && t.tier !== tierFilter) return false
@@ -219,9 +221,9 @@ export function ChooseDesignModal({
       }
       return true
     })
-  }, [search, selectedTheme, selectedStyle, tierFilter])
+  }, [templates, search, selectedTheme, selectedStyle, tierFilter])
 
-  function handleSelect(template: Template) {
+  function handleSelect(template: ApiTemplate) {
     onSelectTemplate({
       id: template.id,
       name: template.name,
@@ -229,6 +231,7 @@ export function ChooseDesignModal({
       colors: template.colors,
       design: template.design,
       envelopeIntro: template.envelopeIntro,
+      defaultAudioUrl: template.defaultAudioUrl ?? null,
     })
     onOpenChange(false)
   }

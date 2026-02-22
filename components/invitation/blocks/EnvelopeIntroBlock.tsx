@@ -16,6 +16,8 @@ export interface EnvelopeIntroBlockProps {
   inviteeSlug?: string
   /** Preview mode: pass mock guest name */
   previewGuestName?: string
+  /** Translated labels: to, dearGuest, tapSealToOpen */
+  labels?: Record<string, string>
 }
 
 const STORAGE_KEY_PREFIX = "invitation_envelope_opened"
@@ -34,8 +36,10 @@ export function EnvelopeIntroBlock({
   invitationId,
   inviteeSlug,
   previewGuestName,
+  labels,
 }: EnvelopeIntroBlockProps) {
-  const displayName = previewGuestName ?? guestName ?? "Dear Guest"
+  const t = (key: string, fallback: string) => (labels?.[key] ?? fallback)
+  const displayName = previewGuestName ?? guestName ?? t("dearGuest", "Dear Guest")
   const initials = (sealInitials ?? "SA").slice(0, 2).toUpperCase()
   const storageKey = getStorageKey(invitationId, inviteeSlug)
   const isPreview = inviteeSlug === "preview"
@@ -104,7 +108,7 @@ export function EnvelopeIntroBlock({
           className="mb-1 text-[10px] font-medium uppercase tracking-[0.35em]"
           style={{ color: "#8b7355", opacity: 0.9 }}
         >
-          To:
+          {t("to", "To:")}
         </p>
         <h2
           className={cn(
@@ -121,7 +125,7 @@ export function EnvelopeIntroBlock({
           className="mt-6 text-[9px] uppercase tracking-[0.2em]"
           style={{ color: "#8b7355", opacity: 0.7 }}
         >
-          Tap the seal to open
+          {t("tapSealToOpen", "Tap the seal to open")}
         </p>
       </div>
 

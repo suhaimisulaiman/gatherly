@@ -8,11 +8,11 @@
 ## 1. Supabase setup
 
 1. Create a project at [supabase.com/dashboard](https://supabase.com/dashboard).
-2. Run the database migration: **SQL Editor** → paste and run `supabase/migrations/00001_initial_schema.sql`. See [DATABASE.md](./DATABASE.md) for details.
+2. Run the database migrations: **SQL Editor** → paste and run all migrations in `supabase/migrations/` in order (00001 through 00005). See [DATABASE.md](./DATABASE.md) for details.
 3. In **Project Settings → API** copy:
    - **Project URL** → `NEXT_PUBLIC_SUPABASE_URL`
    - **Publishable key** (or **anon** key) → `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` or `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-3. (Optional) For server-only admin tasks, copy **service_role** key → `SUPABASE_SERVICE_ROLE_KEY` (never expose to client).
+4. (Optional) For admin config and server-only tasks: copy **service_role** key → `SUPABASE_SERVICE_ROLE_KEY` (never expose to client). Set `ADMIN_EMAILS` (comma-separated emails) for users who can access `/admin/config` to manage card languages and packages.
 
 ## 2. Local environment
 

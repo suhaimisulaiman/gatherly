@@ -8,7 +8,7 @@ export default async function HostLayout({
 }) {
   const user = await getCurrentUser()
   if (!user) {
-    redirect("/login?next=/events/default/studio")
+    redirect("/login?next=/dashboard")
   }
   return <>{children}</>
 }

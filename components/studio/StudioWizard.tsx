@@ -1,9 +1,11 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
+import { useRouter } from "next/navigation"
 import { useForm, FormProvider } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { invitationContentSchema, defaultInvitationContent, type InvitationContent } from "@/lib/schemas/invitationContent"
+import { fetchInvitation, saveInvitation, publishInvitation, isInvitationId, type ApiTemplate, type LabelTranslations } from "@/lib/invitationApi"
 import { Step2EventDetails } from "./steps/Step2EventDetails"
 import { Step3EventAgenda } from "./steps/Step3EventAgenda"
 import { Step4Venue } from "./steps/Step4Venue"
@@ -14,36 +16,12 @@ import { StudioFooter } from "@/components/studio-footer"
 import { InvitationPreview } from "@/components/invitation-preview"
 import { ChooseDesignModal, type SelectedTemplate } from "@/components/choose-design-modal"
 import { Button } from "@/components/ui/button"
+import { UserMenu } from "@/components/auth/UserMenu"
 import { Menu } from "lucide-react"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { useToast } from "@/hooks/use-toast"
-import { TEMPLATES } from "@/lib/templates"
 
-const WEDDING_DEFAULT_MUSIC_URL = "https://www.youtube.com/watch?v=0J7R20ycaU4&t=7"
-
-const DRAFT_KEY_PREFIX = "draft:"
 const TOTAL_STEPS = 10
-
-function loadDraft(eventId: string): Partial<InvitationContent> | null {
-  if (typeof window === "undefined") return null
-  try {
-    const raw = localStorage.getItem(`${DRAFT_KEY_PREFIX}${eventId}`)
-    if (!raw) return null
-    return JSON.parse(raw) as Partial<InvitationContent>
-  } catch {
-    return null
-  }
-}
-
-function saveDraft(eventId: string, data: InvitationContent): boolean {
-  if (typeof window === "undefined") return false
-  try {
-    localStorage.setItem(`${DRAFT_KEY_PREFIX}${eventId}`, JSON.stringify(data))
-    return true
-  } catch {
-    return false
-  }
-}
 
 type Step1Options = {
   language?: string
@@ -72,7 +50,11 @@ interface StudioWizardProps {
   onOpenDesignModal: () => void
   designModalOpen: boolean
   setDesignModalOpen: (open: boolean) => void
+  templates: ApiTemplate[]
+  labelTranslations?: LabelTranslations
   onBackToStep1?: () => void
+  /** Called when an existing invitation is loaded (for template sync) */
+  onInvitationLoaded?: (data: { template_id: string; content: InvitationContent }) => void
 }
 
 export function StudioWizard({
@@ -82,11 +64,17 @@ export function StudioWizard({
   onOpenDesignModal,
   designModalOpen,
   setDesignModalOpen,
+  templates,
+  labelTranslations = {},
   onBackToStep1,
+  onInvitationLoaded,
 }: StudioWizardProps) {
+  const router = useRouter()
   const { toast } = useToast()
   const [currentStep, setCurrentStep] = useState(2)
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle")
+  const [publishLoading, setPublishLoading] = useState(false)
+  const [invitationId, setInvitationId] = useState<string | null>(isInvitationId(eventId) ? eventId : null)
   const [sheetOpen, setSheetOpen] = useState(false)
   const [language, setLanguage] = useState("english")
   const [packageType, setPackageType] = useState("gold")
@@ -97,21 +85,22 @@ export function StudioWizard({
 
   useEffect(() => {
     const opts = loadStep1Options()
-    const wedding = selectedTemplate && TEMPLATES.find((t) => t.id === selectedTemplate.id)?.themes?.includes("Wedding")
+    const defaultAudio = selectedTemplate?.defaultAudioUrl
     if (opts) {
       if (opts.language != null) setLanguage(opts.language)
       if (opts.packageType != null) setPackageType(opts.packageType)
       if (opts.openingStyle != null) setOpeningStyle(opts.openingStyle)
       if (opts.animatedEffect != null) setAnimatedEffect(opts.animatedEffect)
       if (opts.backgroundMusic != null) setBackgroundMusic(opts.backgroundMusic)
+      if (opts.backgroundMusicYoutubeUrl != null) setBackgroundMusicYoutubeUrl(opts.backgroundMusicYoutubeUrl)
       const musicUrl = opts.backgroundMusicYoutubeUrl
       if (musicUrl != null && musicUrl !== "") {
         setBackgroundMusicYoutubeUrl(musicUrl)
-      } else if (wedding) {
-        setBackgroundMusicYoutubeUrl(WEDDING_DEFAULT_MUSIC_URL)
+      } else if (defaultAudio) {
+        setBackgroundMusicYoutubeUrl(defaultAudio)
       }
-    } else if (wedding) {
-      setBackgroundMusicYoutubeUrl(WEDDING_DEFAULT_MUSIC_URL)
+    } else if (defaultAudio) {
+      setBackgroundMusicYoutubeUrl(defaultAudio)
     }
   }, [selectedTemplate])
 
@@ -121,31 +110,54 @@ export function StudioWizard({
   })
 
   useEffect(() => {
-    const draft = loadDraft(eventId)
-    if (draft && Object.keys(draft).length > 0) {
-      form.reset({
-        eventType: draft.eventType ?? defaultInvitationContent.eventType,
-        invitationTitle: draft.invitationTitle ?? defaultInvitationContent.invitationTitle,
-        hostNames: draft.hostNames ?? defaultInvitationContent.hostNames,
-        eventDate: draft.eventDate ?? defaultInvitationContent.eventDate,
-        shortGreeting: draft.shortGreeting ?? defaultInvitationContent.shortGreeting,
-        includeHijriDate: draft.includeHijriDate ?? defaultInvitationContent.includeHijriDate,
-        eventAgenda: draft.eventAgenda ?? defaultInvitationContent.eventAgenda,
-        venueName: draft.venueName ?? defaultInvitationContent.venueName,
-        address: draft.address ?? defaultInvitationContent.address,
-        googleMapsLink: draft.googleMapsLink ?? defaultInvitationContent.googleMapsLink,
-        wazeLink: draft.wazeLink ?? defaultInvitationContent.wazeLink,
-        galleryPhotos: draft.galleryPhotos ?? defaultInvitationContent.galleryPhotos,
-        enableWishes: draft.enableWishes ?? defaultInvitationContent.enableWishes,
-        featuredWishes: draft.featuredWishes ?? defaultInvitationContent.featuredWishes,
-        rsvpMode: draft.rsvpMode ?? defaultInvitationContent.rsvpMode,
-        rsvpDeadline: draft.rsvpDeadline ?? defaultInvitationContent.rsvpDeadline,
-        rsvpMessage: draft.rsvpMessage ?? defaultInvitationContent.rsvpMessage,
-        maxGuests: draft.maxGuests ?? defaultInvitationContent.maxGuests,
-        maxGuestsPerInvitee: draft.maxGuestsPerInvitee ?? defaultInvitationContent.maxGuestsPerInvitee,
+    if (!isInvitationId(eventId)) return
+    let cancelled = false
+    fetchInvitation(eventId)
+      .then((inv) => {
+        if (cancelled || !inv?.content) return
+        const c = inv.content as Record<string, unknown>
+        const content: InvitationContent = {
+          eventType: (c.eventType as string) ?? defaultInvitationContent.eventType,
+          invitationTitle: (c.invitationTitle as string) ?? defaultInvitationContent.invitationTitle,
+          hostNames: (c.hostNames as string) ?? defaultInvitationContent.hostNames,
+          eventDate: (c.eventDate as string) ?? defaultInvitationContent.eventDate,
+          shortGreeting: (c.shortGreeting as string) ?? defaultInvitationContent.shortGreeting,
+          includeHijriDate: (c.includeHijriDate as boolean) ?? defaultInvitationContent.includeHijriDate,
+          eventAgenda: (c.eventAgenda as InvitationContent["eventAgenda"]) ?? defaultInvitationContent.eventAgenda,
+          venueName: (c.venueName as string) ?? defaultInvitationContent.venueName,
+          address: (c.address as string) ?? defaultInvitationContent.address,
+          googleMapsLink: (c.googleMapsLink as string) ?? defaultInvitationContent.googleMapsLink,
+          wazeLink: (c.wazeLink as string) ?? defaultInvitationContent.wazeLink,
+          galleryPhotos: (c.galleryPhotos as string[]) ?? defaultInvitationContent.galleryPhotos,
+          enableWishes: (c.enableWishes as boolean) ?? defaultInvitationContent.enableWishes,
+          featuredWishes: (c.featuredWishes as InvitationContent["featuredWishes"]) ?? defaultInvitationContent.featuredWishes,
+          rsvpMode: (c.rsvpMode as "guest-list" | "open") ?? defaultInvitationContent.rsvpMode,
+          rsvpDeadline: (c.rsvpDeadline as string) ?? defaultInvitationContent.rsvpDeadline,
+          rsvpMessage: (c.rsvpMessage as string) ?? defaultInvitationContent.rsvpMessage,
+          maxGuests: c.maxGuests as number | undefined,
+          maxGuestsPerInvitee: (c.maxGuestsPerInvitee as number) ?? defaultInvitationContent.maxGuestsPerInvitee,
+          language: (c.language as string) ?? "english",
+          packageType: (c.packageType as string) ?? "gold",
+          openingStyle: (c.openingStyle as string) ?? "Circle Gate",
+          animatedEffect: (c.animatedEffect as string) ?? "none",
+          backgroundMusic: (c.backgroundMusic as boolean) ?? false,
+          backgroundMusicYoutubeUrl: (c.backgroundMusicYoutubeUrl as string) ?? "",
+        }
+        form.reset(content)
+        setLanguage((c.language as string) ?? "english")
+        setPackageType((c.packageType as string) ?? "gold")
+        setOpeningStyle((c.openingStyle as string) ?? "Circle Gate")
+        setAnimatedEffect((c.animatedEffect as string) ?? "none")
+        setBackgroundMusic((c.backgroundMusic as boolean) ?? false)
+        setBackgroundMusicYoutubeUrl((c.backgroundMusicYoutubeUrl as string) ?? "")
+        setInvitationId(inv.id)
+        onInvitationLoaded?.({ template_id: inv.template_id, content })
       })
-    }
-  }, [eventId, form])
+      .catch(() => {
+        if (!cancelled) toast({ title: "Could not load invitation", variant: "destructive" })
+      })
+    return () => { cancelled = true }
+  }, [eventId, form, onInvitationLoaded, toast])
 
   const content = form.watch()
 
@@ -154,19 +166,42 @@ export function StudioWizard({
   const triggerSave = useCallback(() => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
     saveTimerRef.current = setTimeout(() => {
-      const data = form.getValues()
-      setSaveStatus("saving")
-      const ok = saveDraft(eventId, data)
-      if (ok) {
-        setSaveStatus("saved")
-        setTimeout(() => setSaveStatus("idle"), 2000)
-      } else {
-        setSaveStatus("idle")
-        toast({ title: "Save failed", description: "Could not save draft", variant: "destructive" })
+      const data = form.getValues() as Record<string, unknown>
+      const templateId = selectedTemplate?.id ?? "elegant-rose"
+      const content = {
+        ...data,
+        language,
+        packageType,
+        openingStyle,
+        animatedEffect,
+        backgroundMusic,
+        backgroundMusicYoutubeUrl,
       }
-      saveTimerRef.current = null
+      setSaveStatus("saving")
+      saveInvitation({
+        id: invitationId ?? undefined,
+        template_id: templateId,
+        content,
+      })
+        .then((inv) => {
+          setInvitationId(inv.id)
+          if (!invitationId) router.replace(`/events/${inv.id}/studio`)
+          setSaveStatus("saved")
+          setTimeout(() => setSaveStatus("idle"), 2000)
+        })
+        .catch((err) => {
+          setSaveStatus("idle")
+          if (err.message === "Unauthorized") {
+            router.push("/login?next=" + encodeURIComponent(window.location.pathname))
+          } else {
+            toast({ title: "Save failed", description: err.message ?? "Could not save draft", variant: "destructive" })
+          }
+        })
+        .finally(() => {
+          saveTimerRef.current = null
+        })
     }, 1000)
-  }, [eventId, form, toast])
+  }, [invitationId, selectedTemplate?.id, form, router, toast, language, packageType, openingStyle, animatedEffect, backgroundMusic, backgroundMusicYoutubeUrl])
 
   useEffect(() => {
     const sub = form.watch(triggerSave)
@@ -175,6 +210,58 @@ export function StudioWizard({
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
     }
   }, [form, triggerSave])
+
+  const handlePublish = useCallback(() => {
+    const doPublish = (id: string) => {
+      setPublishLoading(true)
+      publishInvitation(id)
+        .then((inv) => {
+          if (inv.slug) router.push(`/events/${id}/published?slug=${encodeURIComponent(inv.slug)}`)
+          else toast({ title: "Published", description: "Your invitation is live." })
+        })
+        .catch((err) => {
+          setPublishLoading(false)
+          if (err.message === "Unauthorized") {
+            router.push("/login?next=" + encodeURIComponent(window.location.pathname))
+          } else {
+            toast({ title: "Publish failed", description: err.message ?? "Could not publish", variant: "destructive" })
+          }
+        })
+    }
+    if (invitationId) {
+      doPublish(invitationId)
+    } else {
+      const data = form.getValues() as Record<string, unknown>
+      const templateId = selectedTemplate?.id ?? "elegant-rose"
+      const content = {
+        ...data,
+        language,
+        packageType,
+        openingStyle,
+        animatedEffect,
+        backgroundMusic,
+        backgroundMusicYoutubeUrl,
+      }
+      setPublishLoading(true)
+      saveInvitation({
+        template_id: templateId,
+        content,
+      })
+        .then((inv) => {
+          setInvitationId(inv.id)
+          router.replace(`/events/${inv.id}/studio`)
+          doPublish(inv.id)
+        })
+        .catch((err) => {
+          setPublishLoading(false)
+          if (err.message === "Unauthorized") {
+            router.push("/login?next=" + encodeURIComponent(window.location.pathname))
+          } else {
+            toast({ title: "Publish failed", description: err.message ?? "Could not save before publish", variant: "destructive" })
+          }
+        })
+    }
+  }, [invitationId, form, selectedTemplate?.id, router, toast, language, packageType, openingStyle, animatedEffect, backgroundMusic, backgroundMusicYoutubeUrl])
 
   const previewGuestName = "Encik Ahmad & Family"
   const sealInitials = "SA"
@@ -198,6 +285,7 @@ export function StudioWizard({
               <span className="text-xs text-muted-foreground">Auto-saved</span>
             )}
             <div className="size-1.5 rounded-full bg-emerald-500" />
+            <UserMenu />
           </div>
           <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
             <SheetTrigger asChild>
@@ -271,6 +359,7 @@ export function StudioWizard({
                 openingStyle={openingStyle}
                 animatedEffect={animatedEffect}
                 language={language}
+                labels={labelTranslations[language] ?? labelTranslations["english"] ?? {}}
                 packageType={packageType}
                 backgroundMusic={backgroundMusic}
                 backgroundMusicYoutubeUrl={backgroundMusicYoutubeUrl}
@@ -308,6 +397,8 @@ export function StudioWizard({
                 totalSteps={TOTAL_STEPS}
                 onBack={currentStep === 2 && onBackToStep1 ? onBackToStep1 : () => setCurrentStep((s) => Math.max(1, s - 1))}
                 onNext={() => setCurrentStep((s) => Math.min(TOTAL_STEPS, s + 1))}
+                onPublish={handlePublish}
+                publishLoading={publishLoading}
               />
             </div>
           </section>
@@ -315,6 +406,7 @@ export function StudioWizard({
       </div>
 
       <ChooseDesignModal
+        templates={templates}
         open={designModalOpen}
         onOpenChange={setDesignModalOpen}
         onSelectTemplate={onSelectTemplate}
